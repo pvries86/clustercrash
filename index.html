@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cluster Crash</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="game-shell">
+    <header class="top-bar">
+      <div class="title-lockup">
+        <img class="game-logo" src="assets/logo.png" alt="Cluster Crash" />
+        <h1 class="sr-only">Cluster Crash</h1>
+      </div>
+      <div class="hud">
+        <div class="hud-card">
+          <span>Level</span>
+          <strong id="hudLevel">1</strong>
+        </div>
+        <div class="hud-card">
+          <span>Player</span>
+          <strong id="hudPlayer">Paul</strong>
+        </div>
+        <div class="hud-card">
+          <span id="hudGoalLabel">VMs Restored</span>
+          <strong id="hudScore">0 / 8</strong>
+        </div>
+        <div class="hud-card">
+          <span>Lives</span>
+          <strong id="hudLives">3</strong>
+        </div>
+        <div class="hud-card">
+          <span>Run Score</span>
+          <strong id="hudRunScore">0</strong>
+        </div>
+        <div class="hud-card">
+          <span>Best Run</span>
+          <strong id="hudBestRun">0 / L1</strong>
+        </div>
+        <div class="hud-card hud-stats-card">
+          <span>Build Stats</span>
+          <strong id="hudStats">SPD 0 | JMP 0 | DMG 0 | CD 0.00s</strong>
+        </div>
+        <div class="hud-card hud-buffs-card">
+          <span>Effects</span>
+          <strong id="hudBuffs">-</strong>
+        </div>
+      </div>
+    </header>
+
+    <section class="stage-wrap">
+      <canvas id="gameCanvas" width="1280" height="720" aria-label="Cluster Crash game"></canvas>
+
+      <div id="selectOverlay" class="overlay">
+        <div class="overlay-card">
+          <p class="eyebrow">Choose your engineer</p>
+          <h2>Patch ESXi hosts, recover broken VMs, reboot Windows boxes, and survive impossible tickets.</h2>
+
+          <div class="character-grid">
+            <button class="character-card" data-player="paul" type="button">
+              <img src="assets/player-paul.png" alt="Paul character sprite" />
+              <h3>Paul</h3>
+              <p>Heavy-control engineer with 5 lives, longer invulnerability, and heavy keyboards that pierce armor, pass through one target, and briefly stagger enemies.</p>
+            </button>
+
+            <button class="character-card" data-player="gertjan" type="button">
+              <img src="assets/player-gertjan.png" alt="Gert-Jan character sprite" />
+              <h3>Gert-Jan</h3>
+              <p>Agile glass-cannon engineer with faster movement, sharper air control, and the quickest rapid-fire keyboard spam.</p>
+            </button>
+          </div>
+
+          <div class="instructions">
+            <p><strong>Move:</strong> A/D or Arrow Keys</p>
+            <p><strong>Jump:</strong> W, Arrow Up, or Space</p>
+            <p><strong>Throw Keyboard:</strong> F or Enter</p>
+            <p><strong>Pause:</strong> P or Esc</p>
+            <p><strong>New Procedural Run:</strong> R</p>
+          </div>
+
+          <div class="menu-actions">
+            <button id="resetBestRunButton" class="secondary-action" type="button">Reset Best Run</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="messageOverlay" class="message-overlay hidden">
+        <div class="message-card">
+          <h2 id="messageTitle">Cluster Stabilized</h2>
+          <p id="messageText">Press R to reboot the run.</p>
+          <div class="message-actions">
+            <button id="pauseResetBestRunButton" class="secondary-action hidden" type="button">Reset Best Run</button>
+          </div>
+          <div id="messageSummary" class="message-summary hidden"></div>
+          <div id="messageGuide" class="message-guide hidden">
+            <section class="guide-section">
+              <div class="guide-section-header">
+                <h3>Hazards</h3>
+                <span>Know what each platform threat does</span>
+              </div>
+              <div id="messageHazards" class="guide-grid"></div>
+            </section>
+
+            <section class="guide-section">
+              <div class="guide-section-header">
+                <h3>Enemies</h3>
+                <span>Quick reference for the user types in the run</span>
+              </div>
+              <div id="messageEnemies" class="guide-grid"></div>
+            </section>
+
+            <section class="guide-section">
+              <div class="guide-section-header">
+                <h3>Pickups</h3>
+                <span>Temporary boosts and recovery tools you can grab mid-run</span>
+              </div>
+              <div id="messagePickups" class="guide-grid"></div>
+            </section>
+          </div>
+        </div>
+      </div>
+
+      <div id="upgradeOverlay" class="overlay hidden">
+        <div class="overlay-card">
+          <p class="eyebrow">vCenter Upgrade</p>
+          <h2 id="upgradeTitle">Choose one upgrade before the next maintenance window.</h2>
+          <p id="upgradeSummary" class="upgrade-summary">Current build</p>
+
+          <div id="upgradeGrid" class="upgrade-grid"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="game.js"></script>
+</body>
+</html>
