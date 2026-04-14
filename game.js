@@ -40,6 +40,7 @@ const BOSS_LEVEL_INTERVAL = 4;
 const BOSS_SIDE_PASS_THROUGH = new Set(["rack", "switch", "database"]);
 const BEST_SCORE_KEY = "vsphereSprintBestScore";
 const BEST_LEVEL_KEY = "vsphereSprintBestLevel";
+const ASSET_CACHE_VERSION = "enemy-archetypes-v2";
 const PICKUP_TYPES = [
   { kind: "snapshot", label: "SNAP", color: "#74f7c4", title: "Snapshot Shield" },
   { kind: "vmotion", label: "vMO", color: "#4aa3ff", title: "vMotion Burst" },
@@ -114,8 +115,8 @@ const SPECIAL_HAZARD_TYPES = {
     renderTopPad: 12,
     surfaceInset: 4,
     period: 1.8,
-    activeWindowStart: 0.5,
-    activeWindowEnd: 0.78,
+    activeWindowStart: 0,
+    activeWindowEnd: 1,
   },
   diskFailure: {
     label: "DISK",
@@ -130,7 +131,7 @@ const SPECIAL_HAZARD_TYPES = {
     period: 4.2,
     warningWindowStart: 0.68,
     burstWindowStart: 0.84,
-    burstWindowEnd: 0.94,
+    burstWindowEnd: 0.98,
   },
   backupWindow: {
     spriteKey: "backupWindowHazard",
@@ -144,7 +145,8 @@ const SPECIAL_HAZARD_TYPES = {
     renderTopPad: 0,
     surfaceInset: 4,
     period: 3.1,
-    sweepPadding: 18,
+    sweepPadding: 0,
+    sweepOvershoot: 10,
   },
 };
 const MANAGER_BOSSES = ["Peter", "Richard R", "Richard A", "Chris", "Denise", "Sander", "Walter", "Salah", "Patrick"];
@@ -415,7 +417,7 @@ const USER_VARIANTS = [
     motionStyle: { bobScale: 0.36, idleBobScale: 0.34, tiltScale: 0.42, strideScale: 0.52, legTiltScale: 0.45, squashScale: 0.36, torsoLiftScale: 0.42 },
     behavior: {
       unlockLevel: BOSS_LEVEL_INTERVAL + 1,
-      spawnWeight: 2,
+      spawnWeight: 4,
       hpScaling: "heavy",
       jump: {
         enabled: false,
@@ -448,7 +450,7 @@ const USER_VARIANTS = [
     motionStyle: { bobScale: 1.3, idleBobScale: 0.8, tiltScale: 1.35, strideScale: 1.35, legTiltScale: 1.35, squashScale: 1.18, torsoLiftScale: 1.22, torsoShiftScale: 1.3 },
     behavior: {
       unlockLevel: 3,
-      spawnWeight: 2,
+      spawnWeight: 4,
       hpScaling: "light",
       jump: {
         enabled: true,
@@ -528,7 +530,7 @@ const USER_VARIANTS = [
     motionStyle: { bobScale: 0.62, idleBobScale: 0.72, tiltScale: 0.72, strideScale: 0.62, legTiltScale: 0.58, squashScale: 0.62, torsoLiftScale: 0.95, torsoShiftScale: 1.05 },
     behavior: {
       unlockLevel: BOSS_LEVEL_INTERVAL + 2,
-      spawnWeight: 2,
+      spawnWeight: 4,
       hpScaling: "heavy",
       jump: {
         enabled: false,
@@ -563,17 +565,17 @@ const USER_VARIANTS = [
     kind: "ransomwarePopup",
     spriteKey: "ransomwarePopupUser",
     speedFactor: 0,
-    w: 72,
-    h: 76,
-    hp: 2,
+    w: 58,
+    h: 52,
+    hp: 1,
     jumpPower: 0,
     tint: "#ff4d8d",
-    hitbox: { left: 10, right: 10, top: 8, bottom: 2 },
+    hitbox: { left: 12, right: 12, top: 10, bottom: 6 },
     motionPhase: 0.1,
     motionStyle: { bobScale: 0.2, idleBobScale: 1.1, tiltScale: 0.2, strideScale: 0.1, legTiltScale: 0.1, squashScale: 1.0, torsoLiftScale: 1.1 },
     behavior: {
       unlockLevel: BOSS_LEVEL_INTERVAL + 1,
-      spawnWeight: 2,
+      spawnWeight: 4,
       hpScaling: "light",
       jump: {
         enabled: false,
@@ -583,11 +585,11 @@ const USER_VARIANTS = [
       },
       popup: {
         enabled: true,
-        hiddenMin: 1.0,
-        hiddenMax: 2.4,
-        warningTime: 0.65,
-        activeMin: 1.1,
-        activeMax: 1.9,
+        hiddenMin: 1.4,
+        hiddenMax: 3.0,
+        warningTime: 0.85,
+        activeMin: 0.8,
+        activeMax: 1.25,
         label: "LOCKED",
       },
     },
@@ -606,7 +608,7 @@ const USER_VARIANTS = [
     motionStyle: { bobScale: 0.95, idleBobScale: 0.75, tiltScale: 0.95, strideScale: 1, legTiltScale: 1, squashScale: 0.9, torsoLiftScale: 0.9 },
     behavior: {
       unlockLevel: BOSS_LEVEL_INTERVAL,
-      spawnWeight: 2,
+      spawnWeight: 4,
       hpScaling: "light",
       jump: {
         enabled: false,
@@ -637,7 +639,7 @@ const USER_VARIANTS = [
     motionStyle: { bobScale: 0.88, idleBobScale: 1, tiltScale: 1.18, strideScale: 0.62, legTiltScale: 0.52, squashScale: 0.82, torsoLiftScale: 1.12, torsoShiftScale: 1.35 },
     behavior: {
       unlockLevel: BOSS_LEVEL_INTERVAL + 1,
-      spawnWeight: 2,
+      spawnWeight: 4,
       hpScaling: "light",
       jump: {
         enabled: false,
@@ -680,7 +682,7 @@ const USER_VARIANTS = [
     motionStyle: { bobScale: 0.8, idleBobScale: 0.7, tiltScale: 1.1, strideScale: 0.9, legTiltScale: 0.8, squashScale: 0.75, torsoLiftScale: 1.05, torsoShiftScale: 1.2 },
     behavior: {
       unlockLevel: BOSS_LEVEL_INTERVAL + 2,
-      spawnWeight: 13,
+      spawnWeight: 5,
       hpScaling: "heavy",
       jump: {
         enabled: false,
@@ -743,7 +745,7 @@ const ENEMY_GUIDE_TEXT = {
   },
   ransomwarePopup: {
     title: "Ransomware Popup",
-    description: "Hazard enemy. Hides inside a platform, flashes a warning, then pops up to block space before vanishing.",
+    description: "Modal hazard. Flashes a warning, pops into a small space above the platform, then closes again.",
   },
   escalationUser: {
     title: "Escalation User",
@@ -773,7 +775,7 @@ const HAZARD_GUIDE_TEXT = {
   },
   vent: {
     title: "Overheating Vent",
-    description: "Fires a hot upward burst that can launch you or ruin jump timing if you stand over it.",
+    description: "Always blowing. Standing over it launches you upward and can interrupt careful jumps.",
   },
   reboot: {
     title: "Patch Reboot Tile",
@@ -781,11 +783,11 @@ const HAZARD_GUIDE_TEXT = {
   },
   diskFailure: {
     title: "Disk Failure",
-    description: "The whole platform blinks, then disappears briefly. If you stay on it, you fall with it.",
+    description: "The whole platform blinks, then disappears long enough to punish greedy timing.",
   },
   backupWindow: {
     title: "Backup Window",
-    description: "A moving barrier that sweeps across the platform and gently pushes you along its path without direct damage.",
+    description: "A moving barrier that sweeps past platform edges and can shove you into the gap.",
   },
 };
 const PICKUP_GUIDE_TEXT = {
@@ -1735,8 +1737,7 @@ function isVentHazardActive(zone, now = performance.now()) {
   if (zone.kind !== "vent" || !config) {
     return false;
   }
-  const progress = getSpecialHazardCycleProgress(zone, now);
-  return progress >= config.activeWindowStart && progress <= config.activeWindowEnd;
+  return true;
 }
 
 function isStaticHazardActive(zone, now = performance.now()) {
@@ -1781,11 +1782,14 @@ function getBackupWindowMotion(zone, now = performance.now()) {
     return { offset: 0, dir: 0, speed: 0 };
   }
   const progress = getSpecialHazardCycleProgress(zone, now);
-  const travel = Math.max(0, zone.platformRef.w - zone.w - (config.sweepPadding || 0) * 2);
+  const padding = config.sweepPadding || 0;
+  const overshoot = config.sweepOvershoot || 0;
+  const startOffset = padding - overshoot;
+  const travel = Math.max(0, zone.platformRef.w - zone.w - padding * 2 + overshoot * 2);
   const forward = progress < 0.5;
   const t = forward ? progress * 2 : (1 - progress) * 2;
   return {
-    offset: (config.sweepPadding || 0) + travel * t,
+    offset: startOffset + travel * t,
     dir: forward ? 1 : -1,
     speed: config.period ? (travel * 2) / config.period : 0,
   };
@@ -2668,56 +2672,17 @@ function buildProceduralLevel() {
 
     if (width >= 250 && Math.random() < currentLevelConfig.enemyChance) {
       const unlockedVariants = USER_VARIANTS.filter((variant) => currentLevel >= (variant.behavior?.unlockLevel || 1));
-      const variant = pickWeighted(unlockedVariants, (entry) => entry.behavior?.spawnWeight ?? 1);
-      const spawnX = pickSafeUserSpawnX(platform, variant, surfaceHazard);
-      const scaledHp = getScaledUserHp(variant, enemyScaling);
-      users.push({
-        x: spawnX,
-        y: platform.y - variant.h,
-        prevX: spawnX,
-        spawnX,
-        spawnY: platform.y - variant.h,
-        w: variant.w,
-        h: variant.h,
-        vy: 0,
-        kind: variant.kind,
-        hp: scaledHp,
-        maxHp: scaledHp,
-        jumpPower: variant.jumpPower > 0 ? variant.jumpPower + enemyScaling.jumpBonus : 0,
-        armor: (variant.armor || 0) + (variant.behavior?.hpScaling === "heavy" ? enemyScaling.armorBonus : 0),
-        maxDamagePerHit: variant.maxDamagePerHit || null,
-        motionPhase: variant.motionPhase || 0,
-        motionStyle: variant.motionStyle ? { ...variant.motionStyle } : null,
-        behavior: variant.behavior ? structuredClone(variant.behavior) : null,
-        jumpTimer: randomBetween(0.5, 1.4),
-        shootTimer: randomBetween(1.0, 2.4),
-        slipTimer: 0,
-        snareTimer: 0,
-        jumpDebuffTimer: 0,
-        hazardCycles: {},
-        shootCooldownMultiplier: enemyScaling.shootCooldownMultiplier,
-        projectileSpeedMultiplier: enemyScaling.projectileSpeedMultiplier,
-        tint: variant.tint,
-        grounded: false,
-        hitbox: variant.hitbox,
-        spriteKey: pickLoadedSpriteVariant(variant.spriteKey),
-        assetColliderKey: null,
-        assetColliderOptions: { alignY: "bottom" },
-        minX: platform.x + 12,
-        maxX: platform.x + width - variant.w - 12,
-        speed: randomInt(currentLevelConfig.minUserSpeed, currentLevelConfig.maxUserSpeed) * variant.speedFactor * enemyScaling.speedMultiplier,
-        baseSpeed: 0,
-        dir: Math.random() > 0.5 ? 1 : -1,
-      });
-      users[users.length - 1].baseSpeed = users[users.length - 1].speed;
-      resetUserBehaviorTimers(users[users.length - 1]);
-      users[users.length - 1].assetColliderKey = users[users.length - 1].spriteKey;
-      if (hasUpgrade("maintenanceWindow")) {
-        users[users.length - 1].snareTimer = Math.max(users[users.length - 1].snareTimer, 2.6);
-      }
-      if (hasUpgrade("outOfOffice") && getUserRangedBehavior(users[users.length - 1]).enabled) {
-        users[users.length - 1].shootCooldownMultiplier *= 1.25;
-        users[users.length - 1].shootTimer *= 1.2;
+      const roomyEnoughForSupport = width >= 330;
+      const spawnPool = roomyEnoughForSupport
+        ? unlockedVariants
+        : unlockedVariants.filter((entry) => !variantHasSupportBehavior(entry));
+      const variant = pickWeighted(spawnPool.length ? spawnPool : unlockedVariants, (entry) => entry.behavior?.spawnWeight ?? 1);
+      const supportGroup = variantHasSupportBehavior(variant) && roomyEnoughForSupport;
+      if (supportGroup) {
+        spawnSupportUserGroup(platform, variant, unlockedVariants, enemyScaling, surfaceHazard);
+      } else {
+        const spawnX = pickSafeUserSpawnX(platform, variant, surfaceHazard);
+        spawnUserFromVariant(platform, variant, spawnX, enemyScaling);
       }
     }
 
@@ -2742,6 +2707,8 @@ function buildProceduralLevel() {
     tickets[tickets.length - 1].assetColliderKey = tickets[tickets.length - 1].spriteKey;
     ticketsPlaced += 1;
   }
+
+  ensureSupportEnemiesHaveEscorts(enemyScaling);
 
   const finalPadX = cursorX + 140;
   platforms.push({ x: finalPadX, y: GROUND_Y, w: 620, h: 80, kind: "floor", hitbox: { left: 0, right: 0, top: 0, bottom: 0 } });
@@ -3138,11 +3105,11 @@ function applyHazardsToUser(user, now) {
 
     if (zone.kind === "backupWindow") {
       resolveMovingHazardPush(user, activeZone, zone, now, {
-        minPushSpeed: 120,
-        pushRatio: 0.55,
-        minVelocity: 150,
-        velocityRatio: 0.6,
-        accel: 1400,
+        minPushSpeed: 150,
+        pushRatio: 0.72,
+        minVelocity: 180,
+        velocityRatio: 0.78,
+        accel: 1700,
       });
     }
   }
@@ -3228,6 +3195,160 @@ function pickSafeUserSpawnX(platform, variant, hazardZone) {
   };
 
   return rectsOverlap(leftProbe, hazardZone) ? rightX : leftX;
+}
+
+function variantHasSupportBehavior(variant) {
+  return !!variant.behavior?.support?.enabled;
+}
+
+function variantCanEscortSupport(variant) {
+  return !variantHasSupportBehavior(variant) && !variant.behavior?.popup?.enabled;
+}
+
+function spawnUserFromVariant(platform, variant, spawnX, enemyScaling, options = {}) {
+  const scaledHp = getScaledUserHp(variant, enemyScaling);
+  const user = {
+    x: spawnX,
+    y: platform.y - variant.h,
+    prevX: spawnX,
+    spawnX,
+    spawnY: platform.y - variant.h,
+    w: variant.w,
+    h: variant.h,
+    vy: 0,
+    kind: variant.kind,
+    hp: scaledHp,
+    maxHp: scaledHp,
+    jumpPower: variant.jumpPower > 0 ? variant.jumpPower + enemyScaling.jumpBonus : 0,
+    armor: (variant.armor || 0) + (variant.behavior?.hpScaling === "heavy" ? enemyScaling.armorBonus : 0),
+    maxDamagePerHit: variant.maxDamagePerHit || null,
+    motionPhase: variant.motionPhase || 0,
+    motionStyle: variant.motionStyle ? { ...variant.motionStyle } : null,
+    behavior: variant.behavior ? structuredClone(variant.behavior) : null,
+    jumpTimer: randomBetween(0.5, 1.4),
+    shootTimer: randomBetween(1.0, 2.4),
+    slipTimer: 0,
+    snareTimer: 0,
+    jumpDebuffTimer: 0,
+    hazardCycles: {},
+    shootCooldownMultiplier: enemyScaling.shootCooldownMultiplier,
+    projectileSpeedMultiplier: enemyScaling.projectileSpeedMultiplier,
+    tint: variant.tint,
+    grounded: false,
+    hitbox: variant.hitbox,
+    spriteKey: pickLoadedSpriteVariant(variant.spriteKey),
+    assetColliderKey: null,
+    assetColliderOptions: { alignY: "bottom" },
+    minX: platform.x + 12,
+    maxX: platform.x + platform.w - variant.w - 12,
+    speed: randomInt(currentLevelConfig.minUserSpeed, currentLevelConfig.maxUserSpeed) * variant.speedFactor * enemyScaling.speedMultiplier,
+    baseSpeed: 0,
+    dir: options.dir || (Math.random() > 0.5 ? 1 : -1),
+    supportGroupId: options.supportGroupId || null,
+  };
+  user.baseSpeed = user.speed;
+  resetUserBehaviorTimers(user);
+  user.assetColliderKey = user.spriteKey;
+  if (hasUpgrade("maintenanceWindow")) {
+    user.snareTimer = Math.max(user.snareTimer, 2.6);
+  }
+  if (hasUpgrade("outOfOffice") && getUserRangedBehavior(user).enabled) {
+    user.shootCooldownMultiplier *= 1.25;
+    user.shootTimer *= 1.2;
+  }
+  users.push(user);
+  return user;
+}
+
+function spawnSupportUserGroup(platform, supportVariant, unlockedVariants, enemyScaling, hazardZone) {
+  const escortPool = unlockedVariants.filter(variantCanEscortSupport);
+  const escortVariant = pickWeighted(escortPool.length ? escortPool : unlockedVariants, (entry) => entry.behavior?.spawnWeight ?? 1);
+  const supportFirst = Math.random() > 0.5;
+  const supportX = supportFirst
+    ? platform.x + 28
+    : platform.x + platform.w - supportVariant.w - 28;
+  const escortX = supportFirst
+    ? Math.min(platform.x + platform.w - escortVariant.w - 28, supportX + supportVariant.w + 64)
+    : Math.max(platform.x + 28, supportX - escortVariant.w - 64);
+  const supportProbe = {
+    x: supportX,
+    y: platform.y - supportVariant.h,
+    w: supportVariant.w,
+    h: supportVariant.h,
+    hitbox: supportVariant.hitbox,
+  };
+  const safeSupportX = hazardZone && rectsOverlap(supportProbe, hazardZone)
+    ? platform.x + platform.w - supportVariant.w - 28
+    : supportX;
+  const supportGroupId = `support-${performance.now().toFixed(1)}-${users.length}`;
+  const supportUser = spawnUserFromVariant(platform, supportVariant, safeSupportX, enemyScaling, {
+    dir: supportFirst ? 1 : -1,
+    supportGroupId,
+  });
+  const escortUser = spawnUserFromVariant(platform, escortVariant, escortX, enemyScaling, {
+    dir: supportFirst ? -1 : 1,
+    supportGroupId,
+  });
+  supportUser.minX = Math.max(supportUser.minX, Math.min(supportUser.x, escortUser.x) - 70);
+  supportUser.maxX = Math.min(supportUser.maxX, Math.max(supportUser.x, escortUser.x) + 90);
+  escortUser.minX = Math.max(escortUser.minX, Math.min(supportUser.x, escortUser.x) - 70);
+  escortUser.maxX = Math.min(escortUser.maxX, Math.max(supportUser.x, escortUser.x) + 90);
+}
+
+function userHasNearbySupportTarget(supportUser) {
+  const supportBehavior = getUserSupportBehavior(supportUser);
+  const range = supportBehavior.range || 220;
+  return users.some((candidate) => {
+    if (candidate === supportUser || candidate.defeated || getUserSupportBehavior(candidate).enabled || getUserPopupBehavior(candidate).enabled) {
+      return false;
+    }
+    const dx = (candidate.x + candidate.w / 2) - (supportUser.x + supportUser.w / 2);
+    const dy = (candidate.y + candidate.h / 2) - (supportUser.y + supportUser.h / 2);
+    return Math.hypot(dx, dy) <= range * 0.72;
+  });
+}
+
+function ensureSupportEnemiesHaveEscorts(enemyScaling) {
+  const unlockedVariants = USER_VARIANTS.filter((variant) => currentLevel >= (variant.behavior?.unlockLevel || 1));
+  const escortPool = unlockedVariants.filter(variantCanEscortSupport);
+
+  for (const supportUser of [...users]) {
+    if (supportUser.defeated || !getUserSupportBehavior(supportUser).enabled || userHasNearbySupportTarget(supportUser)) {
+      continue;
+    }
+
+    const supportPlatform = getSupportingPlatform(supportUser, 18);
+    if (!supportPlatform || supportPlatform.w < 280) {
+      continue;
+    }
+
+    const escortVariant = pickWeighted(escortPool.length ? escortPool : unlockedVariants, (entry) => entry.behavior?.spawnWeight ?? 1);
+    if (!escortVariant) {
+      continue;
+    }
+
+    const escortOnRight = supportUser.x + supportUser.w / 2 < supportPlatform.x + supportPlatform.w / 2;
+    const desiredX = escortOnRight
+      ? supportUser.x + supportUser.w + 54
+      : supportUser.x - escortVariant.w - 54;
+    const escortX = Math.max(
+      supportPlatform.x + 24,
+      Math.min(desiredX, supportPlatform.x + supportPlatform.w - escortVariant.w - 24),
+    );
+    const supportGroupId = supportUser.supportGroupId || `support-fix-${performance.now().toFixed(1)}-${users.length}`;
+    supportUser.supportGroupId = supportGroupId;
+    const escortUser = spawnUserFromVariant(supportPlatform, escortVariant, escortX, enemyScaling, {
+      dir: escortOnRight ? -1 : 1,
+      supportGroupId,
+    });
+
+    const patrolLeft = Math.max(supportPlatform.x + 12, Math.min(supportUser.x, escortUser.x) - 76);
+    const patrolRight = Math.min(supportPlatform.x + supportPlatform.w - 12, Math.max(supportUser.x + supportUser.w, escortUser.x + escortUser.w) + 76);
+    supportUser.minX = Math.max(supportUser.minX, patrolLeft);
+    supportUser.maxX = Math.min(supportUser.maxX, patrolRight - supportUser.w);
+    escortUser.minX = Math.max(escortUser.minX, patrolLeft);
+    escortUser.maxX = Math.min(escortUser.maxX, patrolRight - escortUser.w);
+  }
 }
 
 function resolvePlatforms(entity, axis, previousValue, options = {}) {
@@ -3831,7 +3952,9 @@ function resetUserBehaviorTimers(user) {
     user.popupState = "hidden";
     user.popupTimer = randomBetween(popupBehavior.hiddenMin || 1.0, popupBehavior.hiddenMax || 2.4);
     user.popupProgress = 0;
-    user.y = user.spawnY + user.h * 0.82;
+    user.popupHitThisCycle = false;
+    user.y = user.spawnY + user.h + 8;
+    user.colliderRect = { x: user.w / 2 - 1, y: user.h - 1, w: 2, h: 2 };
     user.grounded = true;
   }
   const escalationBehavior = getUserEscalationBehavior(user);
@@ -3998,7 +4121,8 @@ function updatePopupUser(user, popupBehavior, dt) {
     } else if (user.popupState === "warning") {
       user.popupState = "active";
       user.popupTimer = randomBetween(popupBehavior.activeMin || 1.1, popupBehavior.activeMax || 1.9);
-      spawnImpactParticles(user.x + user.w / 2, user.spawnY + user.h * 0.76, user.tint, 10, { speedMin: 90, speedMax: 220 });
+      user.popupHitThisCycle = false;
+      spawnImpactParticles(user.x + user.w / 2, user.spawnY + user.h * 0.48, user.tint, 10, { speedMin: 90, speedMax: 220 });
     } else {
       user.popupState = "hidden";
       user.popupTimer = randomBetween(popupBehavior.hiddenMin || 1.0, popupBehavior.hiddenMax || 2.4);
@@ -4006,17 +4130,27 @@ function updatePopupUser(user, popupBehavior, dt) {
   }
 
   if (user.popupState === "active") {
-    user.y = moveTowards(user.y, user.spawnY, 520 * dt);
+    user.y = moveTowards(user.y, user.spawnY - 16, 640 * dt);
     user.popupProgress = 1;
-    if (rectsOverlap(player, user)) {
+    user.colliderRect = { x: 8, y: 8, w: user.w - 16, h: user.h - 16 };
+    if (!user.popupHitThisCycle && rectsOverlap(player, user)) {
+      user.popupHitThisCycle = true;
       damagePlayer({ source: "enemy" });
+      user.popupState = "hidden";
+      user.popupTimer = randomBetween(popupBehavior.hiddenMin || 1.0, popupBehavior.hiddenMax || 2.4);
+      user.y = user.spawnY + user.h + 8;
+      user.colliderRect = { x: user.w / 2 - 1, y: user.h - 1, w: 2, h: 2 };
     }
   } else if (user.popupState === "warning") {
-    user.y = user.spawnY + user.h * 0.5;
+    user.y = user.spawnY + user.h * 0.18;
     user.popupProgress = 0.5 + Math.sin(performance.now() / 60) * 0.12;
+    user.popupHitThisCycle = false;
+    user.colliderRect = { x: user.w / 2 - 1, y: user.h - 1, w: 2, h: 2 };
   } else {
-    user.y = user.spawnY + user.h * 0.86;
+    user.y = user.spawnY + user.h + 8;
     user.popupProgress = 0;
+    user.popupHitThisCycle = false;
+    user.colliderRect = { x: user.w / 2 - 1, y: user.h - 1, w: 2, h: 2 };
   }
 }
 
@@ -5263,7 +5397,7 @@ function updateSpecialHazards(now) {
       const colliderOffset = getEntityColliderOffset(player);
       const dt = zone.lastTouchTime > 0 ? Math.min(0.05, (now - zone.lastTouchTime) / 1000) : 1 / 60;
       const pushDir = Math.sign(activeZone.vx || 0) || 1;
-      const pushSpeed = Math.max(160, Math.abs(activeZone.vx || 0) * 0.65) * (hasUpgrade("hazardRouting") ? 0.6 : 1);
+      const pushSpeed = Math.max(190, Math.abs(activeZone.vx || 0) * 0.82) * (hasUpgrade("hazardRouting") ? 0.68 : 1);
       let resolveSide = pushDir > 0 ? "right" : "left";
 
       if (previousPlayerBox.x + previousPlayerBox.w <= zoneBox.x + 1) {
@@ -5286,7 +5420,7 @@ function updateSpecialHazards(now) {
       }
 
       player.x += pushDir * pushSpeed * dt;
-      player.vx = moveTowards(player.vx, pushDir * Math.max(180, Math.abs(activeZone.vx || 0) * 0.7) * (hasUpgrade("hazardRouting") ? 0.65 : 1), 1800 * dt);
+      player.vx = moveTowards(player.vx, pushDir * Math.max(220, Math.abs(activeZone.vx || 0) * 0.9) * (hasUpgrade("hazardRouting") ? 0.72 : 1), 2200 * dt);
       player.x = Math.max(0, Math.min(worldWidth - player.w, player.x));
 
       zone.lastTouchTime = now;
@@ -5809,13 +5943,11 @@ function drawUsers() {
     }
 
     const popupBehavior = getUserPopupBehavior(user);
-    if (!user.defeated && popupBehavior.enabled && user.popupState === "hidden") {
-      const sx = user.x - cameraX;
-      ctx.save();
-      ctx.globalAlpha = 0.36;
-      ctx.fillStyle = user.tint;
-      drawRoundRect(sx + 10, user.spawnY + user.h - 12, user.w - 20, 10, 4);
-      ctx.restore();
+    if (popupBehavior.enabled) {
+      if (user.defeated) {
+        continue;
+      }
+      drawRansomwarePopup(user, popupBehavior, performance.now());
       continue;
     }
 
@@ -5841,6 +5973,20 @@ function drawUsers() {
       ctx.stroke();
       ctx.restore();
     }
+    if (!user.defeated && !supportBehavior.enabled) {
+      const supportInfluence = getUserSupportInfluence(user);
+      if (supportInfluence.speedMultiplier > 1.01 || supportInfluence.armorBonus > 0 || supportInfluence.shootCooldownMultiplier < 0.99) {
+        ctx.save();
+        ctx.globalAlpha = 0.82 + Math.sin(performance.now() / 120) * 0.12;
+        ctx.fillStyle = "#d6dde6";
+        drawRoundRect(-16, -user.h / 2 - 16, 32, 6, 3);
+        ctx.fillStyle = "#08111f";
+        ctx.font = "800 7px Inter, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("BUFF", 0, -user.h / 2 - 11);
+        ctx.restore();
+      }
+    }
     if (!user.defeated && user.burstTimer > 0) {
       ctx.fillStyle = "#ff8b5b";
       drawRoundRect(-18, -user.h / 2 - 16, 36, 5, 3);
@@ -5865,6 +6011,75 @@ function drawUsers() {
     }
     ctx.restore();
   }
+}
+
+function drawRansomwarePopup(user, popupBehavior, time) {
+  const sx = user.x - cameraX;
+  const tabY = user.spawnY + user.h - 8;
+  const pulse = 0.75 + Math.sin(time / 90) * 0.25;
+
+  ctx.save();
+  if (user.popupState === "hidden") {
+    ctx.globalAlpha = 0.5;
+    ctx.fillStyle = user.tint;
+    drawRoundRect(sx + user.w / 2 - 12, tabY, 24, 8, 3);
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "800 8px Inter, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("!", sx + user.w / 2, tabY + 7);
+    ctx.restore();
+    return;
+  }
+
+  if (user.popupState === "warning") {
+    ctx.globalAlpha = 0.28 + pulse * 0.22;
+    ctx.strokeStyle = user.tint;
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 5]);
+    ctx.strokeRect(sx + 4, user.spawnY - 10, user.w - 8, user.h + 4);
+    ctx.setLineDash([]);
+    ctx.fillStyle = user.tint;
+    drawRoundRect(sx + user.w / 2 - 16, tabY - 2, 32, 10, 3);
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "800 8px Inter, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("WARN", sx + user.w / 2, tabY + 6);
+    ctx.restore();
+    return;
+  }
+
+  ctx.globalAlpha = 0.92;
+  ctx.shadowColor = `${user.tint}99`;
+  ctx.shadowBlur = 16;
+  if (assets[user.spriteKey]) {
+    drawSpriteFit(assets[user.spriteKey], sx, user.y, user.w, user.h, { alignY: "center", mode: "contain" });
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = "#190915";
+    drawRoundRect(sx + 5, user.y + user.h - 17, user.w - 10, 14, 4);
+    ctx.fillStyle = "#ffd6e6";
+    ctx.font = "800 8px Inter, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(popupBehavior.label || "LOCKED", sx + user.w / 2, user.y + user.h - 7);
+    ctx.restore();
+    return;
+  }
+
+  ctx.fillStyle = "#190915";
+  drawRoundRect(sx, user.y, user.w, user.h, 6);
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = user.tint;
+  drawRoundRect(sx, user.y, user.w, 14, 6);
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "800 8px Inter, sans-serif";
+  ctx.textAlign = "left";
+  ctx.fillText("RANSOM", sx + 6, user.y + 10);
+  ctx.fillStyle = "#ffd6e6";
+  ctx.font = "800 10px Inter, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText(popupBehavior.label || "LOCKED", sx + user.w / 2, user.y + 33);
+  ctx.fillStyle = "#ffffff";
+  drawRoundRect(sx + user.w - 13, user.y + 4, 7, 7, 2);
+  ctx.restore();
 }
 
 function drawUserDenialZones(time) {
@@ -6339,7 +6554,8 @@ function loadImage(src) {
     const image = new Image();
     image.onload = () => resolve(image);
     image.onerror = () => reject(new Error(`Failed to load ${src}`));
-    image.src = src;
+    const cacheSeparator = src.includes("?") ? "&" : "?";
+    image.src = `${src}${cacheSeparator}v=${ASSET_CACHE_VERSION}`;
   });
 }
 
@@ -6355,6 +6571,7 @@ async function preloadAssets() {
       return [key, await loadImage(src)];
     } catch (error) {
       if (OPTIONAL_SPRITE_KEYS.has(key) || (key.startsWith("bg") && key.includes("Var"))) {
+        console.warn(`Optional asset skipped: ${src}`);
         return null;
       }
       throw error;
@@ -6369,6 +6586,15 @@ async function preloadAssets() {
     assets[key] = image;
     assetOpaqueBounds[key] = measureOpaqueBounds(image);
   }
+
+  console.info("Enemy archetype sprites", {
+    auditor: !!assets.auditorUser,
+    spamCaller: !!assets.spamCallerUser,
+    changeManager: !!assets.changeManagerUser,
+    ransomwarePopup: !!assets.ransomwarePopupUser,
+    escalationUser: !!assets.escalationUserSprite,
+    ticketSpammer: !!assets.ticketSpammerUser,
+  });
 }
 
 canvas.style.cursor = "default";

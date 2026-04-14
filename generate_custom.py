@@ -682,7 +682,7 @@ def generate_custom_sprite():
         sys.exit(1)
 
     client = genai.Client(api_key=api_key)
-    assets_dir = r"c:\Scripts\it-platformer\assets"
+    assets_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
 
     # Ensure the directory exists
     if not os.path.exists(assets_dir):
