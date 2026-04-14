@@ -1011,6 +1011,7 @@ function createRunUpgrades() {
     life: 0,
     heavyKeyboards: 0,
     sprintBoots: 0,
+    tripleJump: 0,
     hypervisorGuard: 0,
     ticketVacuum: 0,
     bounceKeys: 0,
@@ -1274,6 +1275,15 @@ const UPGRADE_POOL = [
     apply: () => { runUpgrades.sprintBoots += 1; },
   },
   {
+    id: "tripleJump",
+    name: "Triple Jump",
+    rarity: "uncommon",
+    description: "Gain one extra air jump for safer recoveries and greedier routes.",
+    maxStacks: 1,
+    preview: () => "Air jumps 1 -> 2",
+    apply: () => { runUpgrades.tripleJump += 1; },
+  },
+  {
     id: "hypervisorGuard",
     name: "Hypervisor Guard",
     rarity: "common",
@@ -1286,7 +1296,7 @@ const UPGRADE_POOL = [
     id: "ticketVacuum",
     name: "Ticket Vacuum",
     rarity: "common",
-    description: "Nearby VMs and tickets drift into your build automatically.",
+    description: "Nearby VMs and pickups lock on, then keep drifting into your build.",
     maxStacks: 2,
     preview: () => `Pickup radius ${150 + getUpgradeCount("ticketVacuum") * 90}px`,
     apply: () => { runUpgrades.ticketVacuum += 1; },
@@ -2335,6 +2345,7 @@ function getPlayerStats() {
     ),
     invincibleDuration: config.invincibleDuration + getUpgradeCount("shield") * upgradeConfig.shield.step + getUpgradeCount("hypervisorGuard") * 0.35,
     airControlMultiplier: (config.baseAirControlMultiplier || 1) * (hasUpgrade("lowLatencyInput") ? 0.7 : hasUpgrade("sprintBoots") ? 1.18 : 1),
+    maxAirJumps: config.maxAirJumps + getUpgradeCount("tripleJump"),
   };
 }
 
@@ -5435,15 +5446,7 @@ function updateTickets(time) {
     }
     ticket.renderY = ticket.y + Math.sin(time / 320 + ticket.floatOffset) * 6;
     if (hasUpgrade("ticketVacuum")) {
-      const dx = (player.x + player.w / 2) - (ticket.x + ticket.w / 2);
-      const dy = (player.y + player.h / 2) - (ticket.renderY + ticket.h / 2);
-      const distance = Math.hypot(dx, dy);
-      const vacuumRange = getTicketVacuumRange();
-      if (distance < vacuumRange && distance > 1) {
-        const pull = (1 - distance / vacuumRange) * 8;
-        ticket.x += (dx / distance) * pull;
-        ticket.renderY += (dy / distance) * pull;
-      }
+      applyLatchedVacuum(ticket, { renderKey: "renderY", range: getTicketVacuumRange(), minPull: 7, maxPull: 20 });
     }
     if (rectsOverlap(player, { ...ticket, y: ticket.renderY })) {
       ticket.taken = true;
@@ -5460,6 +5463,27 @@ function updateTickets(time) {
       syncHud();
     }
   }
+}
+
+function applyLatchedVacuum(item, options = {}) {
+  const renderKey = options.renderKey || "renderY";
+  const itemY = item[renderKey] ?? item.y;
+  const dx = (player.x + player.w / 2) - (item.x + item.w / 2);
+  const dy = (player.y + player.h / 2) - (itemY + item.h / 2);
+  const distance = Math.hypot(dx, dy);
+  const vacuumRange = options.range || getTicketVacuumRange();
+
+  if (!item.vacuumLocked && distance < vacuumRange) {
+    item.vacuumLocked = true;
+  }
+  if (!item.vacuumLocked || distance <= 1) {
+    return;
+  }
+
+  const closeness = Math.max(0, 1 - Math.min(distance, vacuumRange) / vacuumRange);
+  const pull = Math.min(distance, (options.minPull || 7) + closeness * (options.maxPull || 20));
+  item.x += (dx / distance) * pull;
+  item[renderKey] = itemY + (dy / distance) * pull;
 }
 
 function applyPickupEffect(pickup) {
@@ -5484,6 +5508,9 @@ function updatePickups(time) {
       continue;
     }
     pickup.renderY = pickup.y + Math.sin(time / 280 + pickup.floatOffset) * 7;
+    if (hasUpgrade("ticketVacuum")) {
+      applyLatchedVacuum(pickup, { renderKey: "renderY", range: getTicketVacuumRange(), minPull: 6, maxPull: 18 });
+    }
     if (rectsOverlap(player, { ...pickup, y: pickup.renderY })) {
       pickup.taken = true;
       runStats.pickupsCollected += 1;

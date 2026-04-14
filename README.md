@@ -95,7 +95,7 @@ Pickups appear during procedural levels:
 
 ## Upgrades
 
-Upgrades are defined in `UPGRADE_POOL` in [game.js](game.js). They modify movement, jump height, keyboard damage, cooldowns, shields, pickups, hazards, boss pressure, and build traits.
+Upgrades are defined in `UPGRADE_POOL` in [game.js](game.js). They modify movement, jump height, air jumps, keyboard damage, cooldowns, shields, pickups, hazards, boss pressure, and build traits.
 
 The upgrade pool uses rarity weights and max stack counts. Each level clear rolls a small set of upgrade choices.
 
