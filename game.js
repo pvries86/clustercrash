@@ -3392,6 +3392,13 @@ function resolvePlatforms(entity, axis, previousValue, options = {}) {
     }
 
     if (axis === "x") {
+      const previousEntityBox = makeCollider({ ...entity, x: previousValue });
+      const wasOnPlatformTop = previousEntityBox.y + previousEntityBox.h <= platformBox.y + 3;
+      const isStillAtPlatformTop = entityBox.y + entityBox.h <= platformBox.y + 8;
+      if (wasOnPlatformTop && isStillAtPlatformTop) {
+        continue;
+      }
+
       collision.hit = true;
       const colliderOffset = getEntityColliderOffset(entity);
       if (entity.vx > 0) {
@@ -5627,14 +5634,6 @@ function drawBackground(time) {
   }
   ctx.restore();
 
-  ctx.save();
-  ctx.fillStyle = "rgba(8, 17, 30, 0.5)";
-  drawRoundRect(18, canvas.height - 54, 154, 28, 10);
-  ctx.fillStyle = theme.glow;
-  ctx.font = "700 13px Inter, sans-serif";
-  ctx.textAlign = "left";
-  ctx.fillText(theme.name || currentLevelConfig.roomName || "Datacenter", 32, canvas.height - 35);
-  ctx.restore();
 
   ctx.fillStyle = "rgba(1, 5, 12, 0.2)";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
