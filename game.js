@@ -1084,6 +1084,7 @@ function createRunUpgrades() {
     quickRecovery: 0,
     efficientPatchCycle: 0,
     snapshotCache: 0,
+    snapshotRollback: 0,
     bonusRecovery: 0,
     fieldKit: 0,
     cableManagement: 0,
@@ -1114,6 +1115,7 @@ function createTraitState() {
     drPlanUsed: false,
     emergencySnapshotUsed: false,
     escalationShieldUsed: false,
+    snapshotRollbacksUsed: 0,
     bonusRecoveryTickets: 0,
     pressureResponseTriggered: false,
     chainKills: 0,
@@ -1524,6 +1526,15 @@ const UPGRADE_POOL = [
     apply: () => { runUpgrades.snapshotCache += 1; },
   },
   {
+    id: "snapshotRollback",
+    name: "Snapshot Rollback",
+    rarity: "uncommon",
+    description: "Falls spend a life and rematerialize you on the last safe platform instead of rewinding the whole level.",
+    maxStacks: 2,
+    preview: () => `${getUpgradeCount("snapshotRollback") + 1} fall rollback${getUpgradeCount("snapshotRollback") === 0 ? "" : "s"} per level`,
+    apply: () => { runUpgrades.snapshotRollback += 1; },
+  },
+  {
     id: "bonusRecovery",
     name: "Bonus Recovery",
     rarity: "rare",
@@ -1729,6 +1740,19 @@ function spawnImpactParticles(x, y, color, count = 6, options = {}) {
       gravity,
     });
   }
+}
+
+function spawnSystemParticles(x, y, color = "#74f7c4", count = 12, options = {}) {
+  spawnImpactParticles(x, y, color, count, {
+    speedMin: 70,
+    speedMax: 220,
+    lifeMin: 0.22,
+    lifeMax: 0.48,
+    sizeMin: 3,
+    sizeMax: 6,
+    gravity: 420,
+    ...options,
+  });
 }
 
 function pickOne(items) {
@@ -2467,6 +2491,7 @@ function getBossWarningMultiplier() {
 function resetPerLevelTraitState() {
   traitState.emergencySnapshotUsed = false;
   traitState.escalationShieldUsed = false;
+  traitState.snapshotRollbacksUsed = 0;
   traitState.bonusRecoveryTickets = 0;
   traitState.pressureResponseTriggered = false;
   traitState.chainKills = 0;
@@ -2477,6 +2502,7 @@ function applyLevelStartPerks() {
   resetPerLevelTraitState();
   if (hasUpgrade("goldenImage")) {
     player.snapshotShield = Math.max(player.snapshotShield, getUpgradeCount("goldenImage"));
+    spawnSystemParticles(player.x + player.w / 2, player.y + player.h * 0.75, "#ffd166", 10);
   }
 }
 
@@ -2554,6 +2580,8 @@ function makePlayer() {
     lives: config.lives,
     score: 0,
     facing: 1,
+    lastSafeX: levelStartSpawn.x,
+    lastSafeY: levelStartSpawn.y,
   };
 }
 
@@ -2964,6 +2992,10 @@ function syncHud() {
   if (player?.snapshotShield > 0) {
     activeEffects.push(`Shield x${player.snapshotShield}`);
   }
+  const snapshotRollbackCount = getUpgradeCount("snapshotRollback");
+  if (snapshotRollbackCount > 0) {
+    activeEffects.push(`Rollback ${Math.max(0, snapshotRollbackCount - traitState.snapshotRollbacksUsed)}/${snapshotRollbackCount}`);
+  }
   if (hasUpgrade("chainResolution") && traitState.chainTimer > 0 && traitState.chainKills > 0) {
     activeEffects.push(`Tempo x${Math.min(traitState.chainKills, 5)} ${Math.ceil(traitState.chainTimer)}s`);
   }
@@ -3079,6 +3111,7 @@ function respawnPlayerInLevel(preservedLives) {
   bossProjectiles = [];
   bossMechanics = [];
   impactParticles = [];
+  spawnSystemParticles(player.x + player.w / 2, player.y + player.h * 0.75, "#74f7c4", 14);
   jumpQueued = false;
   cameraX = 0;
   gameState = "playing";
@@ -3287,6 +3320,93 @@ function getSupportingPlatform(entity, tolerance = 10) {
       centerX <= platformBox.x + platformBox.w + 6
     );
   }) || null;
+}
+
+function rememberPlayerSafeSpot() {
+  if (!player || !player.grounded) {
+    return;
+  }
+  const platform = getSupportingPlatform(player, 14);
+  if (!platform || isPlatformDisabled(platform)) {
+    return;
+  }
+
+  const playerBox = makeCollider(player);
+  const platformBox = makeCollider(platform);
+  const colliderOffset = getEntityColliderOffset(player);
+  player.lastSafeX = Math.max(platform.x + 12, Math.min(platform.x + platform.w - player.w - 12, player.x));
+  player.lastSafeY = platformBox.y - playerBox.h - colliderOffset.y;
+}
+
+function getGodModeRecoverySpot() {
+  if (Number.isFinite(player?.lastSafeX) && Number.isFinite(player?.lastSafeY)) {
+    return { x: player.lastSafeX, y: player.lastSafeY };
+  }
+
+  const targetX = Math.max(0, Math.min(worldWidth, cameraX + canvas.width * 0.35));
+  let bestPlatform = null;
+  let bestScore = Infinity;
+  for (const platform of platforms) {
+    if (isPlatformDisabled(platform) || platform.w < player.w + 32) {
+      continue;
+    }
+    const platformBox = makeCollider(platform);
+    const platformCenterX = platformBox.x + platformBox.w / 2;
+    const score = Math.abs(platformCenterX - targetX) + Math.abs(platformBox.y - GROUND_Y) * 0.35;
+    if (score < bestScore) {
+      bestScore = score;
+      bestPlatform = platform;
+    }
+  }
+
+  if (!bestPlatform) {
+    return { x: levelStartSpawn.x, y: levelStartSpawn.y };
+  }
+
+  const platformBox = makeCollider(bestPlatform);
+  const playerBox = makeCollider(player);
+  const colliderOffset = getEntityColliderOffset(player);
+  return {
+    x: Math.max(bestPlatform.x + 12, Math.min(bestPlatform.x + bestPlatform.w - player.w - 12, targetX - player.w / 2)),
+    y: platformBox.y - playerBox.h - colliderOffset.y,
+  };
+}
+
+function recoverPlayerToSafeSpot(options = {}) {
+  const recovery = getGodModeRecoverySpot();
+  player.x = Math.max(0, Math.min(worldWidth - player.w, recovery.x));
+  player.y = recovery.y;
+  player.prevX = player.x;
+  player.vx = 0;
+  player.vy = 0;
+  player.grounded = false;
+  player.airJumpsRemaining = player.maxAirJumps;
+  player.invincibleTimer = Math.max(player.invincibleTimer, options.invincibleDuration ?? 0.6);
+  cameraX = Math.max(0, Math.min(player.x - canvas.width * 0.35, worldWidth - canvas.width));
+  jumpQueued = false;
+  spawnSystemParticles(player.x + player.w / 2, player.y + player.h * 0.75, options.color || "#74f7c4", options.count || 12);
+}
+
+function recoverGodModeFall() {
+  recoverPlayerToSafeSpot({ color: "#74f7c4", count: 12, invincibleDuration: 0.6 });
+}
+
+function trySnapshotRollbackFall() {
+  const rollbackCount = getUpgradeCount("snapshotRollback");
+  if (rollbackCount <= 0 || traitState.snapshotRollbacksUsed >= rollbackCount || player.lives <= 1) {
+    return false;
+  }
+
+  traitState.snapshotRollbacksUsed += 1;
+  player.lives -= 1;
+  runStats.livesBurned += 1;
+  player.hurtTimer = 0.18;
+  applyDamageRecoveryUpgrades();
+  markDamageReset();
+  recoverPlayerToSafeSpot({ color: "#ffd166", count: 16, invincibleDuration: player.invincibleDuration + 0.35 });
+  addScreenShake(4, 0.1);
+  syncHud();
+  return true;
 }
 
 function willTouchFirewall(entity, dir, ahead = 18) {
@@ -3620,6 +3740,7 @@ function damagePlayer(options = {}) {
     player.snapshotShield -= 1;
     runStats.shieldPops += 1;
     player.invincibleTimer = 0.8;
+    spawnSystemParticles(player.x + player.w / 2, player.y + player.h * 0.45, "#74f7c4", 12, { speedMin: 100, speedMax: 260 });
     syncHud();
     return;
   }
@@ -3629,6 +3750,7 @@ function damagePlayer(options = {}) {
     player.invincibleTimer = Math.max(player.invincibleTimer, player.invincibleDuration + 0.2);
     player.hurtTimer = 0.18;
     applyDamageRecoveryUpgrades();
+    spawnSystemParticles(player.x + player.w / 2, player.y + player.h * 0.55, "#b98cff", 16, { speedMin: 90, speedMax: 250 });
     markDamageReset();
     syncHud();
     return;
@@ -3639,6 +3761,7 @@ function damagePlayer(options = {}) {
     player.snapshotShield = Math.max(player.snapshotShield, 1);
     player.invincibleTimer = Math.max(player.invincibleTimer, player.invincibleDuration + 0.4);
     applyDamageRecoveryUpgrades(0.1);
+    spawnSystemParticles(player.x + player.w / 2, player.y + player.h * 0.55, "#ffd166", 16, { speedMin: 90, speedMax: 250 });
     markDamageReset();
     syncHud();
     return;
@@ -4150,9 +4273,14 @@ function updatePlayer(dt) {
   const previousY = player.y;
   player.y += player.vy * dt;
   resolvePlatforms(player, "y", previousY);
+  rememberPlayerSafeSpot();
 
   if (player.y > canvas.height + 160) {
-    damagePlayer({ ignoreShield: true, cause: "fall" });
+    if (godModeEnabled) {
+      recoverGodModeFall();
+    } else if (!trySnapshotRollbackFall()) {
+      damagePlayer({ ignoreShield: true, cause: "fall" });
+    }
   }
 
   if (player.invincibleTimer > 0) {
@@ -5644,6 +5772,7 @@ function updateTickets(time) {
         if (traitState.bonusRecoveryTickets >= Math.max(2, 5 - bonusRecoveryCount)) {
           traitState.bonusRecoveryTickets = 0;
           player.snapshotShield = Math.min(player.snapshotShield + 1, 2);
+          spawnSystemParticles(player.x + player.w / 2, player.y + player.h * 0.45, "#74f7c4", 10);
         }
       }
       syncHud();
@@ -5684,6 +5813,7 @@ function applyPickupEffect(pickup) {
   } else if (pickup.kind === "ha") {
     player.lives = Math.min(player.lives + 1, getCurrentMaxLives());
   }
+  spawnSystemParticles(pickup.x + pickup.w / 2, (pickup.renderY ?? pickup.y) + pickup.h / 2, pickup.color, pickup.kind === "ha" ? 16 : 12);
   runScore += 2;
   syncHud();
 }
