@@ -1,6 +1,7 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 const stageWrap = document.querySelector(".stage-wrap");
+const gameShell = document.querySelector(".game-shell");
 const selectOverlay = document.getElementById("selectOverlay");
 const messageOverlay = document.getElementById("messageOverlay");
 const messageCard = messageOverlay.querySelector(".message-card");
@@ -6606,20 +6607,44 @@ function loadOptionalAssets(entries) {
   });
 }
 
+function getVisualViewportRect() {
+  const viewport = window.visualViewport;
+  return {
+    x: viewport?.offsetLeft || 0,
+    y: viewport?.offsetTop || 0,
+    w: viewport?.width || window.innerWidth,
+    h: viewport?.height || window.innerHeight,
+  };
+}
+
+function syncViewportSizing() {
+  const viewport = getVisualViewportRect();
+  document.documentElement.style.setProperty("--app-height", `${Math.floor(viewport.h)}px`);
+}
+
 function fitGameCanvasToStage() {
   if (!stageWrap) {
     return;
   }
 
-  const availableW = stageWrap.clientWidth;
-  const availableH = stageWrap.clientHeight;
+  syncViewportSizing();
+
+  const viewport = getVisualViewportRect();
+  const stageRect = stageWrap.getBoundingClientRect();
+  const visibleRight = viewport.x + viewport.w;
+  const visibleBottom = viewport.y + viewport.h;
+  const availableW = Math.max(0, Math.min(stageRect.width, visibleRight - stageRect.left, stageRect.right - viewport.x));
+  const availableH = Math.max(0, Math.min(stageRect.height, visibleBottom - stageRect.top, stageRect.bottom - viewport.y));
   if (availableW <= 0 || availableH <= 0) {
     return;
   }
 
-  const scale = Math.min(availableW / canvas.width, availableH / canvas.height);
-  canvas.style.width = `${Math.floor(canvas.width * scale)}px`;
-  canvas.style.height = `${Math.floor(canvas.height * scale)}px`;
+  const dpiGuard = Math.max(1, Math.ceil(window.devicePixelRatio || 1));
+  const scale = Math.min(availableW / canvas.width, (availableH - dpiGuard) / canvas.height);
+  const fittedW = Math.max(1, Math.floor(canvas.width * scale));
+  const fittedH = Math.max(1, Math.floor(canvas.height * scale));
+  canvas.style.width = `${fittedW}px`;
+  canvas.style.height = `${fittedH}px`;
 }
 
 async function preloadAssets() {
@@ -6758,8 +6783,17 @@ window.addEventListener("blur", () => {
 });
 
 window.addEventListener("resize", fitGameCanvasToStage);
-if (window.ResizeObserver && stageWrap) {
-  new ResizeObserver(fitGameCanvasToStage).observe(stageWrap);
+if (window.visualViewport) {
+  window.visualViewport.addEventListener("resize", fitGameCanvasToStage);
+  window.visualViewport.addEventListener("scroll", fitGameCanvasToStage);
+}
+if (window.ResizeObserver) {
+  if (stageWrap) {
+    new ResizeObserver(fitGameCanvasToStage).observe(stageWrap);
+  }
+  if (gameShell) {
+    new ResizeObserver(fitGameCanvasToStage).observe(gameShell);
+  }
 }
 
 preloadAssets()
