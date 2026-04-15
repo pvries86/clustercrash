@@ -136,6 +136,13 @@ PRESET_DEFINITIONS = {
     "network-switch": preset("pixel art network switch platform with a flat standable top edge, ethernet ports and link lights, clean enterprise silhouette, readable as a wide platform", "platform", "side"),
     "database-node": preset("pixel art database server platform with a flat standable top edge, storage and server details, heavy enterprise silhouette, readable as a wide platform", "platform", "side"),
     "esxi-host": preset("pixel art VMware ESXi host platform with a flat standable top edge, low-profile enterprise server chassis, ports and status lights, readable as a wide platform", "platform", "side"),
+    "office-desk": preset("pixel art office desk platform with a flat standable top edge, helpdesk counter shape, monitors, sticky notes, ticket paperwork, support desk details, readable wide platform silhouette", "platform", "side"),
+    "conference-table": preset("pixel art office conference table platform with a flat standable top edge, long polished tabletop, laptops, coffee cups, scattered papers, sturdy readable office silhouette", "platform", "side"),
+    "ups-battery-rack": preset("pixel art UPS battery rack platform with a flat standable top edge, black battery cabinets, yellow warning stripes, industrial datacenter details, heavy sturdy platform silhouette", "platform", "side"),
+    "cable-tray": preset("pixel art overhead metal cable tray platform with a flat standable top edge, bundled colored network cables, narrow industrial server room silhouette, readable side-scrolling platform", "platform", "side"),
+    "crash-cart": preset("pixel art IT crash cart platform with a flat standable top edge, rolling cart with monitor, keyboard tray, KVM tools, compact datacenter troubleshooting silhouette", "platform", "side"),
+    "patch-wall": preset("pixel art network patch wall platform with a flat standable top edge, horizontal patch panels, cable management, blinking ports, dense datacenter silhouette, wide readable platform", "platform", "side"),
+    "cloud-appliance": preset("pixel art cloud backup appliance platform with a flat standable top edge, enterprise appliance chassis, glowing cloud icon motif without readable text, backup and recovery hardware silhouette", "platform", "side"),
     "player-paul": preset("pixel art playable character sprite of Paul, male IT engineer, VMware and Windows administrator vibe, office-casual clothes, calm confident expression, sturdy readable silhouette", "player", "side", "right"),
     "player-gertjan": preset("pixel art playable character sprite of Gert-Jan, male IT engineer, agile systems administrator vibe, office-casual clothes, energetic expression, lean readable silhouette", "player", "side", "right"),
     "difficult-user": preset("pixel art office user enemy, full body visible, frustrated expression, business-casual clothing, demanding posture, readable hostile silhouette", "enemy", "side", "right"),
@@ -190,6 +197,16 @@ PRESET_ALIASES = {
     "rack": "server-rack",
     "switch": "network-switch",
     "database": "database-node",
+    "office-desk-platform": "office-desk",
+    "platform-office-desk": "office-desk",
+    "conference-table-platform": "conference-table",
+    "platform-conference-table": "conference-table",
+    "ups-rack": "ups-battery-rack",
+    "platform-ups-battery-rack": "ups-battery-rack",
+    "platform-cable-tray": "cable-tray",
+    "platform-crash-cart": "crash-cart",
+    "platform-patch-wall": "patch-wall",
+    "platform-cloud-appliance": "cloud-appliance",
     "terminal": "terminal-console",
     "antenna": "wifi-antenna",
     "winserver": "windows-server",
@@ -621,6 +638,8 @@ def collect_asset_setups(args):
 
     asset_type = resolve_asset_type(args.asset_type)
     view_mode = resolve_view_mode(args.view_mode)
+
+    preset_data = None
 
     if not preset_entries:
         file_name = (args.file_name or input("Enter the desired file name (without .png extension, e.g., 'new-enemy'): ")).strip()

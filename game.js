@@ -37,12 +37,22 @@ const BASE_LEVEL_SEGMENTS = 10;
 const BASE_GAP_WIDTH = 150;
 const BASE_STEP_UP = 130;
 const BASE_STEP_DOWN = 140;
+const THEME_DEFAULT_TUNING = {
+  hazardChanceMultiplier: 1,
+  enemyChanceMultiplier: 1,
+  gapMultiplier: 1,
+  floorGapMultiplier: 1,
+  platformWidthMultiplier: 1,
+  enemyWeights: {},
+  hazardWeights: {},
+  platformWeights: {},
+};
 const JUMP_KEYS = new Set(["ArrowUp", "w", "W", " "]);
 const BOSS_LEVEL_INTERVAL = 4;
 const BOSS_SIDE_PASS_THROUGH = new Set(["rack", "switch", "database"]);
 const BEST_SCORE_KEY = "vsphereSprintBestScore";
 const BEST_LEVEL_KEY = "vsphereSprintBestLevel";
-const ASSET_CACHE_VERSION = "enemy-archetypes-v2";
+const ASSET_CACHE_VERSION = "platform-themes-v1";
 const PICKUP_TYPES = [
   { kind: "snapshot", label: "SNAP", color: "#74f7c4", title: "Snapshot Shield" },
   { kind: "vmotion", label: "vMO", color: "#4aa3ff", title: "vMotion Burst" },
@@ -240,7 +250,7 @@ const BOSS_ARENAS = [
 ];
 const ROOM_THEMES = [
   {
-    //name: "Datacenter",
+    name: "Datacenter",
     skyTop: "#07111f",
     skyMid: "#09152a",
     skyBottom: "#04060d",
@@ -250,8 +260,14 @@ const ROOM_THEMES = [
     skylineB: "#0d2642",
     backgroundStyle: "datacenter",
     backgroundImageBase: "bgDatacenter",
-    platformPool: ["rack", "switch", "database", "esxi"],
+    platformPool: ["rack", "switch", "database", "esxi", "crashCart", "patchWall", "cloudAppliance"],
     decorationPool: ["terminal", "antenna", "patchpanel", "winserver"],
+    themeTuning: {
+      hazardChanceMultiplier: 1,
+      enemyWeights: { walker: 1.2, jumper: 1.15, armored: 1, emailer: 0.95, spamCaller: 1.05, ticketSpammer: 0.95 },
+      hazardWeights: { dataLeak: 1.1, static: 1, cableMess: 1, vent: 1, reboot: 1, backupWindow: 0.95, diskFailure: 0.9 },
+      platformWeights: { rack: 1.1, switch: 1.05, database: 1, esxi: 1, crashCart: 0.85, patchWall: 0.75, cloudAppliance: 0.65 },
+    },
   },
   {
     name: "Office Floor",
@@ -264,8 +280,15 @@ const ROOM_THEMES = [
     skylineB: "#353252",
     backgroundStyle: "office",
     backgroundImageBase: "bgOffice",
-    platformPool: ["switch", "database", "esxi"],
+    platformPool: ["switch", "database", "esxi", "officeDesk", "crashCart"],
     decorationPool: ["terminal", "winserver", "patchpanel"],
+    themeTuning: {
+      enemyChanceMultiplier: 1.08,
+      hazardChanceMultiplier: 0.92,
+      enemyWeights: { emailer: 2.4, vip: 1.85, walker: 1.3, escalationUser: 1.45, ticketSpammer: 1.25, armored: 0.45, armoredHeavy: 0.35, auditor: 0.8 },
+      hazardWeights: { dataLeak: 1.35, static: 1.15, reboot: 1.1, cableMess: 0.75, vent: 0.55, diskFailure: 0.55, backupWindow: 0.7 },
+      platformWeights: { officeDesk: 2.15, crashCart: 1.05, switch: 1.25, database: 1.05, esxi: 0.75 },
+    },
   },
   {
     name: "Server Room",
@@ -278,8 +301,14 @@ const ROOM_THEMES = [
     skylineB: "#123645",
     backgroundStyle: "serverroom",
     backgroundImageBase: "bgServer",
-    platformPool: ["rack", "database", "esxi"],
+    platformPool: ["rack", "database", "esxi", "upsRack", "cableTray", "patchWall", "crashCart"],
     decorationPool: ["patchpanel", "antenna", "terminal"],
+    themeTuning: {
+      hazardChanceMultiplier: 1.14,
+      enemyWeights: { armored: 1.8, armoredHeavy: 1.65, auditor: 1.35, changeManager: 1.25, emailer: 0.75, vip: 0.8, spamCaller: 0.7 },
+      hazardWeights: { cableMess: 2.1, vent: 1.85, static: 1.25, reboot: 1.15, dataLeak: 0.8, backupWindow: 0.75, diskFailure: 0.9 },
+      platformWeights: { rack: 1.25, database: 1.05, esxi: 1.15, upsRack: 1.5, cableTray: 1.25, patchWall: 1.35, crashCart: 0.75 },
+    },
   },
   {
     name: "DR Site",
@@ -292,8 +321,18 @@ const ROOM_THEMES = [
     skylineB: "#271c55",
     backgroundStyle: "drsite",
     backgroundImageBase: "bgDr",
-    platformPool: ["rack", "switch", "esxi"],
+    platformPool: ["rack", "switch", "esxi", "upsRack", "cloudAppliance", "crashCart", "patchWall"],
     decorationPool: ["antenna", "winserver", "patchpanel"],
+    themeTuning: {
+      hazardChanceMultiplier: 1.22,
+      enemyChanceMultiplier: 1.05,
+      gapMultiplier: 1.22,
+      floorGapMultiplier: 1.16,
+      platformWidthMultiplier: 0.94,
+      enemyWeights: { escalationUser: 1.9, spamCaller: 1.45, ticketSpammer: 1.35, vip: 1.25, auditor: 1.15, armoredHeavy: 1.1, walker: 0.85 },
+      hazardWeights: { backupWindow: 2.15, diskFailure: 2.05, reboot: 1.35, static: 1.2, dataLeak: 0.85, cableMess: 0.9, vent: 0.85 },
+      platformWeights: { rack: 1.05, switch: 0.9, esxi: 1.15, upsRack: 1.35, cloudAppliance: 1.65, crashCart: 0.95, patchWall: 0.9 },
+    },
   },
 ];
 const USER_VARIANTS = [
@@ -872,6 +911,12 @@ const staticSprites = {
   switch: "assets/network-switch.png",
   database: "assets/database-node.png",
   esxi: "assets/esxi-host.png",
+  officeDesk: "assets/platform-office-desk.png",
+  upsRack: "assets/platform-ups-battery-rack.png",
+  cableTray: "assets/platform-cable-tray.png",
+  crashCart: "assets/platform-crash-cart.png",
+  patchWall: "assets/platform-patch-wall.png",
+  cloudAppliance: "assets/platform-cloud-appliance.png",
   terminal: "assets/terminal-console.png",
   antenna: "assets/wifi-antenna.png",
   patchpanel: "assets/patch-panel.png",
@@ -932,6 +977,12 @@ const SPRITE_VARIANT_MAP = {
   switch: { prefix: "network-switch-", basePath: "assets/" },
   database: { prefix: "database-node-", basePath: "assets/" },
   esxi: { prefix: "esxi-host-", basePath: "assets/" },
+  officeDesk: { prefix: "platform-office-desk-", basePath: "assets/" },
+  upsRack: { prefix: "platform-ups-battery-rack-", basePath: "assets/" },
+  cableTray: { prefix: "platform-cable-tray-", basePath: "assets/" },
+  crashCart: { prefix: "platform-crash-cart-", basePath: "assets/" },
+  patchWall: { prefix: "platform-patch-wall-", basePath: "assets/" },
+  cloudAppliance: { prefix: "platform-cloud-appliance-", basePath: "assets/" },
   terminal: { prefix: "terminal-console-", basePath: "assets/" },
   antenna: { prefix: "wifi-antenna-", basePath: "assets/" },
   patchpanel: { prefix: "patch-panel-", basePath: "assets/" },
@@ -1256,7 +1307,7 @@ const UPGRADE_POOL = [
   {
     id: "life",
     name: "Extra Snapshot",
-    rarity: "common",
+    rarity: "uncommon",
     description: "Add one immediate life and raise your life cap.",
     maxStacks: 8,
     preview: () => "+1 life now and for future levels",
@@ -1270,7 +1321,7 @@ const UPGRADE_POOL = [
     name: "Heavy Keyboards",
     rarity: "common",
     description: "Gain +2 damage, but each keyboard flies slower.",
-    maxStacks: 2,
+    maxStacks: 4,
     preview: () => `+2 damage, -${110 * (getUpgradeCount("heavyKeyboards") + 1)} throw speed`,
     apply: () => { runUpgrades.heavyKeyboards += 1; },
   },
@@ -1279,8 +1330,8 @@ const UPGRADE_POOL = [
     name: "Sprint Boots",
     rarity: "common",
     description: "Gain extra move speed, but air control gets a bit looser.",
-    maxStacks: 2,
-    preview: () => "+22 speed, more ground-biased handling",
+    maxStacks: 4,
+    preview: () => `+${22 * (getUpgradeCount("sprintBoots") + 1)} total speed`,
     apply: () => { runUpgrades.sprintBoots += 1; },
   },
   {
@@ -1288,8 +1339,8 @@ const UPGRADE_POOL = [
     name: "Triple Jump",
     rarity: "uncommon",
     description: "Gain one extra air jump for safer recoveries and greedier routes.",
-    maxStacks: 1,
-    preview: () => "Air jumps 1 -> 2",
+    maxStacks: 2,
+    preview: () => `Air jumps ${1 + getUpgradeCount("tripleJump")} -> ${2 + getUpgradeCount("tripleJump")}`,
     apply: () => { runUpgrades.tripleJump += 1; },
   },
   {
@@ -1297,8 +1348,8 @@ const UPGRADE_POOL = [
     name: "Hypervisor Guard",
     rarity: "common",
     description: "Extend invulnerability after taking damage.",
-    maxStacks: 2,
-    preview: () => `+${(0.35 * (getUpgradeCount("hypervisorGuard") + 1)).toFixed(2)}s damage grace`,
+    maxStacks: 4,
+    preview: () => `+${(0.35 * (getUpgradeCount("hypervisorGuard") + 1)).toFixed(2)}s total damage grace`,
     apply: () => { runUpgrades.hypervisorGuard += 1; },
   },
   {
@@ -1306,8 +1357,8 @@ const UPGRADE_POOL = [
     name: "Ticket Vacuum",
     rarity: "common",
     description: "Nearby VMs and pickups lock on, then keep drifting into your build.",
-    maxStacks: 2,
-    preview: () => `Pickup radius ${150 + getUpgradeCount("ticketVacuum") * 90}px`,
+    maxStacks: 4,
+    preview: () => `Pickup radius ${150 + (getUpgradeCount("ticketVacuum") + 1) * 90}px`,
     apply: () => { runUpgrades.ticketVacuum += 1; },
   },
   {
@@ -1315,8 +1366,8 @@ const UPGRADE_POOL = [
     name: "Efficient Patch Cycle",
     rarity: "common",
     description: "Temporary pickup effects last longer.",
-    maxStacks: 2,
-    preview: () => `+${Math.round((Math.pow(1.35, getUpgradeCount("efficientPatchCycle") + 1) - 1) * 100)}% pickup duration`,
+    maxStacks: 4,
+    preview: () => `+${Math.round((Math.pow(1.3, getUpgradeCount("efficientPatchCycle") + 1) - 1) * 100)}% pickup duration`,
     apply: () => { runUpgrades.efficientPatchCycle += 1; },
   },
   {
@@ -1324,7 +1375,7 @@ const UPGRADE_POOL = [
     name: "Field Kit",
     rarity: "common",
     description: "Procedural levels spawn more mid-run pickups.",
-    maxStacks: 2,
+    maxStacks: 4,
     preview: () => `+${Math.round((getUpgradeCount("fieldKit") + 1) * 6)}% pickup chance`,
     apply: () => { runUpgrades.fieldKit += 1; },
   },
@@ -1333,8 +1384,8 @@ const UPGRADE_POOL = [
     name: "Cable Management",
     rarity: "common",
     description: "Cable mess hazards barely slow you down anymore.",
-    maxStacks: 1,
-    preview: () => "Cut cable snare and jump penalties",
+    maxStacks: 3,
+    preview: () => `${Math.max(0.04, 0.24 - (getUpgradeCount("cableManagement") + 1) * 0.06).toFixed(2)}s cable penalty`,
     apply: () => { runUpgrades.cableManagement += 1; },
   },
   {
@@ -1342,8 +1393,8 @@ const UPGRADE_POOL = [
     name: "Leak Skates",
     rarity: "common",
     description: "Data leaks become a speed lane instead of a slippery penalty.",
-    maxStacks: 1,
-    preview: () => "Data leaks grant a speed burst",
+    maxStacks: 3,
+    preview: () => `Data leak boost ${(0.5 + getUpgradeCount("leakSkates") * 0.25).toFixed(2)}s`,
     apply: () => { runUpgrades.leakSkates += 1; },
   },
   {
@@ -1351,32 +1402,32 @@ const UPGRADE_POOL = [
     name: "Vent Rider",
     rarity: "common",
     description: "Overheating vents launch you higher and more safely.",
-    maxStacks: 1,
-    preview: () => "Bigger upward boost with bonus invulnerability",
+    maxStacks: 3,
+    preview: () => `Vent boost +${200 * (getUpgradeCount("ventRider") + 1)}`,
     apply: () => { runUpgrades.ventRider += 1; },
   },
   {
     id: "outOfOffice",
     name: "Out of Office",
-    rarity: "common",
+    rarity: "uncommon",
     description: "Ranged users shoot less often across the whole run.",
-    maxStacks: 1,
-    preview: () => "Email users attack 25% less often",
+    maxStacks: 3,
+    preview: () => `${Math.round((1 - Math.pow(1.22, -(getUpgradeCount("outOfOffice") + 1))) * 100)}% slower ranged attacks`,
     apply: () => { runUpgrades.outOfOffice += 1; },
   },
   {
     id: "bounceKeys",
     name: "Bounce Keys",
     rarity: "uncommon",
-    description: "Thrown keyboards ricochet once off the environment.",
-    maxStacks: 1,
-    preview: () => "Keyboards bounce one time",
+    description: "Thrown keyboards ricochet extra times off the environment.",
+    maxStacks: 3,
+    preview: () => `${getUpgradeCount("bounceKeys") + 1} keyboard bounce${getUpgradeCount("bounceKeys") === 0 ? "" : "s"}`,
     apply: () => { runUpgrades.bounceKeys += 1; },
   },
   {
     id: "emergencySnapshot",
     name: "Emergency Snapshot",
-    rarity: "uncommon",
+    rarity: "rare",
     description: "Survive one lethal hit per level with 1 life remaining.",
     maxStacks: 1,
     preview: () => "One lethal hit each level becomes a rollback",
@@ -1387,7 +1438,7 @@ const UPGRADE_POOL = [
     name: "Piercing Keys",
     rarity: "uncommon",
     description: "Keyboards pass through one additional normal enemy.",
-    maxStacks: 2,
+    maxStacks: 4,
     preview: () => `Pierce ${getUpgradeCount("piercingKeys") + 1} extra target${getUpgradeCount("piercingKeys") >= 1 ? "s" : ""}`,
     apply: () => { runUpgrades.piercingKeys += 1; },
   },
@@ -1395,9 +1446,9 @@ const UPGRADE_POOL = [
     id: "fragmentingKeyboard",
     name: "Fragmenting Keyboard",
     rarity: "uncommon",
-    description: "A hit splinters into two smaller shards.",
-    maxStacks: 1,
-    preview: () => "Spawn two mini-keyboard shards on impact",
+    description: "A hit splinters into more smaller shards.",
+    maxStacks: 3,
+    preview: () => `Spawn ${(getUpgradeCount("fragmentingKeyboard") + 1) * 2} mini-keyboard shards`,
     apply: () => { runUpgrades.fragmentingKeyboard += 1; },
   },
   {
@@ -1405,8 +1456,8 @@ const UPGRADE_POOL = [
     name: "Overclocked Throw",
     rarity: "uncommon",
     description: "Keyboards fly faster, but the throw cycle runs slightly hotter.",
-    maxStacks: 2,
-    preview: () => "+220 throw speed, slightly longer cooldown",
+    maxStacks: 4,
+    preview: () => `+${220 * (getUpgradeCount("overclockedThrow") + 1)} total throw speed, hotter cooldown`,
     apply: () => { runUpgrades.overclockedThrow += 1; },
   },
   {
@@ -1414,8 +1465,8 @@ const UPGRADE_POOL = [
     name: "Crit Incident",
     rarity: "uncommon",
     description: "A few keyboards turn into high-damage incident spikes.",
-    maxStacks: 2,
-    preview: () => `${Math.round((getUpgradeCount("critIncident") + 1) * 12)}% crit chance`,
+    maxStacks: 4,
+    preview: () => `${Math.round((getUpgradeCount("critIncident") + 1) * 10)}% crit chance`,
     apply: () => { runUpgrades.critIncident += 1; },
   },
   {
@@ -1423,8 +1474,8 @@ const UPGRADE_POOL = [
     name: "Low-Latency Input",
     rarity: "uncommon",
     description: "Gain snappier air control at the cost of a little top speed.",
-    maxStacks: 1,
-    preview: () => "More air control, slightly lower raw speed",
+    maxStacks: 3,
+    preview: () => `+${Math.round((getUpgradeCount("lowLatencyInput") + 1) * 18)}% air control, -${(getUpgradeCount("lowLatencyInput") + 1) * 8} speed`,
     apply: () => { runUpgrades.lowLatencyInput += 1; },
   },
   {
@@ -1441,8 +1492,8 @@ const UPGRADE_POOL = [
     name: "High Jump Profile",
     rarity: "uncommon",
     description: "Jump higher, but sacrifice a bit of movement speed.",
-    maxStacks: 1,
-    preview: () => "+52 jump, -18 speed",
+    maxStacks: 3,
+    preview: () => `+${52 * (getUpgradeCount("highJumpProfile") + 1)} total jump, -${14 * (getUpgradeCount("highJumpProfile") + 1)} speed`,
     apply: () => { runUpgrades.highJumpProfile += 1; },
   },
   {
@@ -1450,8 +1501,8 @@ const UPGRADE_POOL = [
     name: "Momentum Cache",
     rarity: "uncommon",
     description: "Carry speed better through the air and resist slippery hazard drag.",
-    maxStacks: 1,
-    preview: () => "Higher air carry and hazard resistance",
+    maxStacks: 3,
+    preview: () => `+${Math.round((getUpgradeCount("momentumCache") + 1) * 8)}% air carry, better hazard resistance`,
     apply: () => { runUpgrades.momentumCache += 1; },
   },
   {
@@ -1459,8 +1510,8 @@ const UPGRADE_POOL = [
     name: "Quick Recovery",
     rarity: "uncommon",
     description: "After taking a hit, you surge back into motion faster.",
-    maxStacks: 1,
-    preview: () => "Gain a brief speed burst after damage",
+    maxStacks: 3,
+    preview: () => `${(2.0 + (getUpgradeCount("quickRecovery") + 1) * 0.5).toFixed(1)}s recovery burst`,
     apply: () => { runUpgrades.quickRecovery += 1; },
   },
   {
@@ -1468,17 +1519,17 @@ const UPGRADE_POOL = [
     name: "Snapshot Cache",
     rarity: "uncommon",
     description: "Runs skew toward defensive pickups like Snapshot and HA.",
-    maxStacks: 1,
-    preview: () => "Better odds for defensive pickups",
+    maxStacks: 3,
+    preview: () => `Defensive pickup weight x${1 + (getUpgradeCount("snapshotCache") + 1) * 2}`,
     apply: () => { runUpgrades.snapshotCache += 1; },
   },
   {
     id: "bonusRecovery",
     name: "Bonus Recovery",
-    rarity: "uncommon",
+    rarity: "rare",
     description: "Every few restored VMs grants a Snapshot shield.",
-    maxStacks: 1,
-    preview: () => "Every 4 VMs restored grants Shield x1",
+    maxStacks: 3,
+    preview: () => `Shield every ${Math.max(2, 5 - (getUpgradeCount("bonusRecovery") + 1))} VMs`,
     apply: () => { runUpgrades.bonusRecovery += 1; },
   },
   {
@@ -1486,8 +1537,8 @@ const UPGRADE_POOL = [
     name: "Shock Insulation",
     rarity: "uncommon",
     description: "Static and reboot hazards hit much less harshly.",
-    maxStacks: 1,
-    preview: () => "Soften static and reboot punishment",
+    maxStacks: 3,
+    preview: () => `${getUpgradeCount("shockInsulation") + 1} hazard insulation stack${getUpgradeCount("shockInsulation") === 0 ? "" : "s"}`,
     apply: () => { runUpgrades.shockInsulation += 1; },
   },
   {
@@ -1495,8 +1546,8 @@ const UPGRADE_POOL = [
     name: "Hazard Routing",
     rarity: "uncommon",
     description: "Backup windows and moving hazards shove you less aggressively.",
-    maxStacks: 1,
-    preview: () => "Reduce moving hazard push by 40%",
+    maxStacks: 3,
+    preview: () => `${Math.round((1 - Math.pow(0.72, getUpgradeCount("hazardRouting") + 1)) * 100)}% less moving hazard push`,
     apply: () => { runUpgrades.hazardRouting += 1; },
   },
   {
@@ -1504,8 +1555,8 @@ const UPGRADE_POOL = [
     name: "Beam Timing",
     rarity: "uncommon",
     description: "Boss warning mechanics telegraph a little longer.",
-    maxStacks: 1,
-    preview: () => "Longer boss warning windows",
+    maxStacks: 3,
+    preview: () => `${Math.round((1 + (getUpgradeCount("beamTiming") + 1) * 0.22) * 100)}% boss warning time`,
     apply: () => { runUpgrades.beamTiming += 1; },
   },
   {
@@ -1513,8 +1564,8 @@ const UPGRADE_POOL = [
     name: "Managerial Immunity",
     rarity: "uncommon",
     description: "Boss hits get a small grace buffer between life losses.",
-    maxStacks: 1,
-    preview: () => "Boss hits gain a short protection cooldown",
+    maxStacks: 3,
+    preview: () => `+${((getUpgradeCount("managerialImmunity") + 1) * 0.45).toFixed(2)}s boss grace`,
     apply: () => { runUpgrades.managerialImmunity += 1; },
   },
   {
@@ -1529,10 +1580,10 @@ const UPGRADE_POOL = [
   {
     id: "changeFreeze",
     name: "Change Freeze",
-    rarity: "uncommon",
-    description: "Bosses briefly slow down whenever you land a hit.",
-    maxStacks: 1,
-    preview: () => "Bosses freeze slightly on impact",
+    rarity: "rare",
+    description: "Bosses briefly slow down on impact, with a short refresh cooldown.",
+    maxStacks: 3,
+    preview: () => `${(0.45 + getUpgradeCount("changeFreeze") * 0.14).toFixed(2)}s boss impact freeze`,
     apply: () => { runUpgrades.changeFreeze += 1; },
   },
   {
@@ -1540,8 +1591,8 @@ const UPGRADE_POOL = [
     name: "Pressure Response",
     rarity: "uncommon",
     description: "When a boss drops below half HP, gain a temporary speed surge.",
-    maxStacks: 1,
-    preview: () => "Boss phase threshold grants tempo",
+    maxStacks: 3,
+    preview: () => `${6 + getUpgradeCount("pressureResponse") * 2}s boss tempo burst`,
     apply: () => { runUpgrades.pressureResponse += 1; },
   },
   {
@@ -1549,8 +1600,8 @@ const UPGRADE_POOL = [
     name: "Golden Image",
     rarity: "rare",
     description: "Start every level with a free Snapshot shield.",
-    maxStacks: 1,
-    preview: () => "Begin each level with Shield x1",
+    maxStacks: 2,
+    preview: () => `Begin each level with Shield x${getUpgradeCount("goldenImage") + 1}`,
     apply: () => { runUpgrades.goldenImage += 1; },
   },
   {
@@ -1575,9 +1626,9 @@ const UPGRADE_POOL = [
     id: "datastoreEcho",
     name: "Datastore Echo",
     rarity: "rare",
-    description: "Missed keyboards loop back once like a boomerang.",
-    maxStacks: 1,
-    preview: () => "Misses return once",
+    description: "Missed keyboards can loop back like a boomerang.",
+    maxStacks: 2,
+    preview: () => `${getUpgradeCount("datastoreEcho") + 1} miss return${getUpgradeCount("datastoreEcho") === 0 ? "" : "s"}`,
     apply: () => { runUpgrades.datastoreEcho += 1; },
   },
   {
@@ -1585,26 +1636,26 @@ const UPGRADE_POOL = [
     name: "vMotion Reflex",
     rarity: "rare",
     description: "Taking damage triggers a short speed burst and extra phasing.",
-    maxStacks: 1,
-    preview: () => "Gain a reflex burst after damage",
+    maxStacks: 3,
+    preview: () => `${(3.0 + (getUpgradeCount("vMotionReflex") + 1) * 0.6).toFixed(1)}s reflex burst`,
     apply: () => { runUpgrades.vMotionReflex += 1; },
   },
   {
     id: "replyAll",
     name: "Reply-All",
     rarity: "rare",
-    description: "Every throw sends two weaker side keyboards with it.",
-    maxStacks: 1,
-    preview: () => "Each throw fans out into a spread",
+    description: "Every throw sends weaker side keyboards with it.",
+    maxStacks: 2,
+    preview: () => `${(getUpgradeCount("replyAll") + 1) * 2} side keyboards per throw`,
     apply: () => { runUpgrades.replyAll += 1; },
   },
   {
     id: "maintenanceWindow",
     name: "Maintenance Window",
-    rarity: "rare",
+    rarity: "uncommon",
     description: "Normal enemies start each level slowed and out of sync.",
-    maxStacks: 1,
-    preview: () => "Enemies open levels slowed",
+    maxStacks: 3,
+    preview: () => `${(2.0 + (getUpgradeCount("maintenanceWindow") + 1) * 0.6).toFixed(1)}s enemy startup slow`,
     apply: () => { runUpgrades.maintenanceWindow += 1; },
   },
   {
@@ -1612,8 +1663,8 @@ const UPGRADE_POOL = [
     name: "Change Advisory Board",
     rarity: "rare",
     description: "Bosses move and fire slower, but they take longer to delete.",
-    maxStacks: 1,
-    preview: () => "Safer bosses, higher boss HP",
+    maxStacks: 2,
+    preview: () => `${getUpgradeCount("changeAdvisoryBoard") + 1} CAB safety stack${getUpgradeCount("changeAdvisoryBoard") === 0 ? "" : "s"}`,
     apply: () => { runUpgrades.changeAdvisoryBoard += 1; },
   },
 ];
@@ -1694,6 +1745,33 @@ function moveTowards(current, target, maxDelta) {
   return target;
 }
 
+function getThemeTuning(theme = currentLevelConfig?.theme) {
+  return {
+    ...THEME_DEFAULT_TUNING,
+    ...(theme?.themeTuning || {}),
+    enemyWeights: { ...THEME_DEFAULT_TUNING.enemyWeights, ...(theme?.themeTuning?.enemyWeights || {}) },
+    hazardWeights: { ...THEME_DEFAULT_TUNING.hazardWeights, ...(theme?.themeTuning?.hazardWeights || {}) },
+    platformWeights: { ...THEME_DEFAULT_TUNING.platformWeights, ...(theme?.themeTuning?.platformWeights || {}) },
+  };
+}
+
+function getThemeWeightedEnemySpawnWeight(variant, tuning = getThemeTuning()) {
+  const baseWeight = variant.behavior?.spawnWeight ?? 1;
+  return baseWeight * (tuning.enemyWeights[variant.kind] ?? 1);
+}
+
+function getThemeWeightedHazardSpawnWeight(kind, tuning = getThemeTuning()) {
+  const baseWeight = kind === "firewall" ? 4 : SPECIAL_HAZARD_TYPES[kind]?.spawnWeight ?? 1;
+  return baseWeight * (tuning.hazardWeights[kind] ?? 1);
+}
+
+function pickThemePlatformStyle(theme, segmentIndex) {
+  if (segmentIndex % 4 === 3) {
+    return "bridge";
+  }
+  const tuning = getThemeTuning(theme);
+  return pickWeighted(theme.platformPool, (kind) => tuning.platformWeights[kind] ?? 1) || pickOne(theme.platformPool);
+}
 function pickWeighted(items, getWeight) {
   if (!items.length) {
     return null;
@@ -2078,6 +2156,8 @@ function buildLevelConfig(level) {
     ? backgroundImages[tier % backgroundImages.length]
     : roomTheme.backgroundImageBase || null;
 
+  const tuning = getThemeTuning(roomTheme);
+
   return {
     isBossLevel: level % BOSS_LEVEL_INTERVAL === 0,
     bossName,
@@ -2086,11 +2166,11 @@ function buildLevelConfig(level) {
     bossAttackScale: Math.min(1 + tier * 0.009, 1.85),
     ticketTarget: Math.min(BASE_TICKETS + Math.floor(tier * 0.35) + longRunBonus, 40),
     segments: Math.min(BASE_LEVEL_SEGMENTS + Math.floor(tier * 0.4) + longRunBonus, 48),
-    maxGapWidth: Math.min(BASE_GAP_WIDTH + Math.floor(tier * 2.3), 340),
+    maxGapWidth: Math.min(Math.round((BASE_GAP_WIDTH + Math.floor(tier * 2.3)) * tuning.gapMultiplier), 390),
     maxStepUp: Math.min(BASE_STEP_UP + Math.floor(tier * 1.2), 230),
     maxStepDown: Math.min(BASE_STEP_DOWN + Math.floor(tier * 1.4), 280),
-    hazardChance: Math.min(0.5 + tier * 0.008, 0.97),
-    enemyChance: Math.min(0.65 + tier * 0.006, 0.98),
+    hazardChance: Math.min((0.5 + tier * 0.008) * tuning.hazardChanceMultiplier, 0.98),
+    enemyChance: Math.min((0.65 + tier * 0.006) * tuning.enemyChanceMultiplier, 0.98),
     minUserSpeed: Math.min(90 + Math.floor(tier * 3.2), 420),
     maxUserSpeed: Math.min(170 + Math.floor(tier * 5.4), 700),
     theme: { ...roomTheme, backgroundImage },
@@ -2239,6 +2319,27 @@ function getAdaptivePlatformMode(assetKey, targetW, targetH, fallbackMode = "con
   return ratioDelta > 2.2 ? "stretch" : fallbackMode;
 }
 
+const PLATFORM_RENDER_CONFIG = {
+  rack: { asset: "rack", offsetY: -4, renderH: 108, surfaceInset: 2, platformH: 32 },
+  switch: { asset: "switch", offsetY: -4, renderH: 92, surfaceInset: 2, platformH: 32 },
+  database: { asset: "database", offsetY: -10, renderH: 116, surfaceInset: 4, platformH: 42 },
+  esxi: { asset: "esxi", offsetY: -4, renderH: 108, surfaceInset: 4, platformH: 32 },
+  officeDesk: { asset: "officeDesk", offsetY: -8, renderH: 106, surfaceInset: 4, platformH: 34 },
+  upsRack: { asset: "upsRack", offsetY: -6, renderH: 112, surfaceInset: 3, platformH: 36 },
+  cableTray: { asset: "cableTray", offsetY: -2, renderH: 58, surfaceInset: 2, platformH: 24 },
+  crashCart: { asset: "crashCart", offsetY: -18, renderH: 118, surfaceInset: 5, platformH: 34 },
+  patchWall: { asset: "patchWall", offsetY: -6, renderH: 104, surfaceInset: 3, platformH: 32 },
+  cloudAppliance: { asset: "cloudAppliance", offsetY: -8, renderH: 112, surfaceInset: 4, platformH: 36 },
+};
+
+function getPlatformRenderConfig(kind) {
+  return PLATFORM_RENDER_CONFIG[kind] || null;
+}
+
+function getGeneratedPlatformHeight(kind) {
+  return getPlatformRenderConfig(kind)?.platformH || 32;
+}
+
 function getEntityColliderOffset(entity) {
   if (entity.colliderRect) {
     return {
@@ -2267,15 +2368,8 @@ function getEntityColliderOffset(entity) {
 }
 
 function syncWorldSpriteColliders() {
-  const platformRender = {
-    rack: { asset: "rack", offsetY: -4, renderH: 108, surfaceInset: 2 },
-    switch: { asset: "switch", offsetY: -4, renderH: 92, surfaceInset: 2 },
-    database: { asset: "database", offsetY: -10, renderH: 116, surfaceInset: 4 },
-    esxi: { asset: "esxi", offsetY: -4, renderH: 108, surfaceInset: 4 },
-  };
-
   for (const platform of platforms) {
-    const config = platformRender[platform.kind];
+    const config = getPlatformRenderConfig(platform.kind);
     if (!config || !assets[config.asset]) {
       platform.colliderRect = null;
       continue;
@@ -2332,20 +2426,20 @@ function resetRunUpgrades() {
 
 function getPlayerStats() {
   const config = playerConfigs[selectedPlayerKey];
-  const lowLatencyPenalty = hasUpgrade("lowLatencyInput") ? 12 : 0;
-  const highJumpPenalty = hasUpgrade("highJumpProfile") ? 18 : 0;
+  const lowLatencyPenalty = getUpgradeCount("lowLatencyInput") * 8;
+  const highJumpPenalty = getUpgradeCount("highJumpProfile") * 14;
   const sprintBonus = getUpgradeCount("sprintBoots") * 22;
   const heavyKeyboardDamage = getUpgradeCount("heavyKeyboards") * 2;
   const heavyKeyboardSpeedPenalty = getUpgradeCount("heavyKeyboards") * 110;
   const overclockedThrowSpeed = getUpgradeCount("overclockedThrow") * 220;
-  const overclockedCooldownPenalty = 1 + getUpgradeCount("overclockedThrow") * 0.08;
+  const overclockedCooldownPenalty = 1 + getUpgradeCount("overclockedThrow") * 0.07;
   const chainStacks = getTempoStacks();
   const chainSpeedBonus = chainStacks * 12;
   const chainCooldownMultiplier = Math.max(0.78, 1 - chainStacks * 0.04);
   return {
     ...config,
     speed: config.speed + getUpgradeCount("speed") * upgradeConfig.speed.step + sprintBonus + chainSpeedBonus - lowLatencyPenalty - highJumpPenalty,
-    jump: config.jump + getUpgradeCount("jump") * upgradeConfig.jump.step + (hasUpgrade("highJumpProfile") ? 52 : 0),
+    jump: config.jump + getUpgradeCount("jump") * upgradeConfig.jump.step + getUpgradeCount("highJumpProfile") * 52,
     keyboardDamage: config.keyboardDamage + getUpgradeCount("damage") * upgradeConfig.damage.step + heavyKeyboardDamage,
     keyboardSpeed: config.keyboardSpeed + overclockedThrowSpeed - heavyKeyboardSpeedPenalty,
     keyboardCooldown: Math.max(
@@ -2353,13 +2447,13 @@ function getPlayerStats() {
       config.keyboardCooldown * (upgradeConfig.fireRate.multiplier ** getUpgradeCount("fireRate")) * overclockedCooldownPenalty * chainCooldownMultiplier,
     ),
     invincibleDuration: config.invincibleDuration + getUpgradeCount("shield") * upgradeConfig.shield.step + getUpgradeCount("hypervisorGuard") * 0.35,
-    airControlMultiplier: (config.baseAirControlMultiplier || 1) * (hasUpgrade("lowLatencyInput") ? 0.7 : hasUpgrade("sprintBoots") ? 1.18 : 1),
+    airControlMultiplier: (config.baseAirControlMultiplier || 1) * (1 + getUpgradeCount("lowLatencyInput") * 0.18 + getUpgradeCount("momentumCache") * 0.08),
     maxAirJumps: config.maxAirJumps + getUpgradeCount("tripleJump"),
   };
 }
 
 function getPickupDurationMultiplier() {
-  return Math.pow(1.35, getUpgradeCount("efficientPatchCycle"));
+  return Math.pow(1.3, getUpgradeCount("efficientPatchCycle"));
 }
 
 function getTicketVacuumRange() {
@@ -2367,7 +2461,7 @@ function getTicketVacuumRange() {
 }
 
 function getBossWarningMultiplier() {
-  return hasUpgrade("beamTiming") ? 1.35 : 1;
+  return 1 + getUpgradeCount("beamTiming") * 0.22;
 }
 
 function resetPerLevelTraitState() {
@@ -2382,7 +2476,7 @@ function resetPerLevelTraitState() {
 function applyLevelStartPerks() {
   resetPerLevelTraitState();
   if (hasUpgrade("goldenImage")) {
-    player.snapshotShield = Math.max(player.snapshotShield, 1);
+    player.snapshotShield = Math.max(player.snapshotShield, getUpgradeCount("goldenImage"));
   }
 }
 
@@ -2415,8 +2509,8 @@ function getEnemyUpgradeScaling() {
     jumpBonus: Math.min(runUpgrades.jump * 8, 60),
     hpBonus: Math.min(Math.floor(runUpgrades.damage / 3), 2),
     armorBonus: Math.min(Math.floor(runUpgrades.damage / 5), 2),
-    shootCooldownMultiplier: Math.max(1 - runUpgrades.fireRate * 0.025, 0.8),
-    projectileSpeedMultiplier: Math.min(1 + runUpgrades.fireRate * 0.03, 1.18),
+    shootCooldownMultiplier: Math.max(1 - runUpgrades.fireRate * 0.022, 0.78),
+    projectileSpeedMultiplier: Math.min(1 + runUpgrades.fireRate * 0.028, 1.22),
   };
 }
 
@@ -2527,17 +2621,19 @@ function buildProceduralLevel() {
       specialTimer: profile.specialCooldown * randomBetween(0.55, 0.9),
       dashBurstTimer: 0,
       pursuitTimer: 0,
+      changeFreezeCooldown: 0,
       profile,
       hitbox: { left: 16, right: 16, top: 12, bottom: 4 },
     };
-    if (hasUpgrade("changeAdvisoryBoard")) {
-      boss.hp = Math.ceil(boss.hp * 1.18);
+    const cabCount = getUpgradeCount("changeAdvisoryBoard");
+    if (cabCount > 0) {
+      boss.hp = Math.ceil(boss.hp * (1 + cabCount * 0.14));
       boss.maxHp = boss.hp;
       boss.profile = {
         ...boss.profile,
-        speed: boss.profile.speed * 0.92,
-        cooldown: boss.profile.cooldown * 1.12,
-        specialCooldown: boss.profile.specialCooldown * 1.08,
+        speed: boss.profile.speed * Math.pow(0.92, cabCount),
+        cooldown: boss.profile.cooldown * (1 + cabCount * 0.1),
+        specialCooldown: boss.profile.specialCooldown * (1 + cabCount * 0.08),
       };
       boss.vx = Math.sign(boss.vx || -1) * boss.profile.speed * currentLevelConfig.bossSpeedScale;
     }
@@ -2562,14 +2658,19 @@ function buildProceduralLevel() {
   let currentY = GROUND_Y;
   let ticketsPlaced = 0;
   const enemyScaling = getEnemyUpgradeScaling();
+  const themeTuning = getThemeTuning(currentLevelConfig.theme);
 
   for (let i = 0; i < currentLevelConfig.segments; i += 1) {
-    const segmentStyle = i % 4 === 3 ? "bridge" : pickOne(currentLevelConfig.theme.platformPool);
+    const segmentStyle = pickThemePlatformStyle(currentLevelConfig.theme, i);
     const isFloor = segmentStyle === "bridge";
     const platformKind = isFloor ? "floor" : segmentStyle;
-    const gap = isFloor ? randomInt(60, 120) : randomInt(70, currentLevelConfig.maxGapWidth);
-    const width = isFloor ? randomInt(380, 620) : randomInt(220, 360);
-    const platformHeight = isFloor ? 80 : segmentStyle === "database" ? 42 : 32;
+    const gap = isFloor
+      ? randomInt(Math.round(60 * themeTuning.floorGapMultiplier), Math.round(120 * themeTuning.floorGapMultiplier))
+      : randomInt(70, currentLevelConfig.maxGapWidth);
+    const width = isFloor
+      ? randomInt(Math.round(380 * themeTuning.platformWidthMultiplier), Math.round(620 * themeTuning.platformWidthMultiplier))
+      : randomInt(Math.round(220 * themeTuning.platformWidthMultiplier), Math.round(360 * themeTuning.platformWidthMultiplier));
+    const platformHeight = isFloor ? 80 : getGeneratedPlatformHeight(platformKind);
     const platformY = isFloor
       ? GROUND_Y
       : Math.max(410, Math.min(560, currentY + randomInt(-currentLevelConfig.maxStepUp, currentLevelConfig.maxStepDown)));
@@ -2602,8 +2703,8 @@ function buildProceduralLevel() {
       const unlockedSpecialHazards = Object.keys(SPECIAL_HAZARD_TYPES)
         .filter((key) => currentLevel >= (SPECIAL_HAZARD_TYPES[key].unlockLevel || 1));
       const hazardKind = isFloor
-        ? pickWeighted(unlockedSpecialHazards.filter((key) => SPECIAL_HAZARD_TYPES[key].allowedOnFloor), (key) => SPECIAL_HAZARD_TYPES[key].spawnWeight)
-        : pickWeighted(["firewall", ...unlockedSpecialHazards], (key) => key === "firewall" ? 4 : SPECIAL_HAZARD_TYPES[key].spawnWeight);
+        ? pickWeighted(unlockedSpecialHazards.filter((key) => SPECIAL_HAZARD_TYPES[key].allowedOnFloor), (key) => getThemeWeightedHazardSpawnWeight(key, themeTuning))
+        : pickWeighted(["firewall", ...unlockedSpecialHazards], (key) => getThemeWeightedHazardSpawnWeight(key, themeTuning));
 
       if (hazardKind === "firewall") {
         surfaceFirewall = {
@@ -2669,8 +2770,9 @@ function buildProceduralLevel() {
     }
 
     if (i >= 1 && width >= 260 && Math.random() < (0.18 + getUpgradeCount("fieldKit") * 0.06)) {
-      const pickupType = hasUpgrade("snapshotCache")
-        ? pickWeighted(PICKUP_TYPES, (entry) => (entry.kind === "snapshot" || entry.kind === "ha" ? 3 : 1))
+      const snapshotCacheCount = getUpgradeCount("snapshotCache");
+      const pickupType = snapshotCacheCount > 0
+        ? pickWeighted(PICKUP_TYPES, (entry) => (entry.kind === "snapshot" || entry.kind === "ha" ? 1 + snapshotCacheCount * 2 : 1))
         : pickOne(PICKUP_TYPES);
       const pickupBaseKey = getPickupSpriteBaseKey(pickupType.kind);
       pickups.push({
@@ -2696,10 +2798,10 @@ function buildProceduralLevel() {
       const spawnPool = roomyEnoughForSupport
         ? unlockedVariants
         : unlockedVariants.filter((entry) => !variantHasSupportBehavior(entry));
-      const variant = pickWeighted(spawnPool.length ? spawnPool : unlockedVariants, (entry) => entry.behavior?.spawnWeight ?? 1);
+      const variant = pickWeighted(spawnPool.length ? spawnPool : unlockedVariants, (entry) => getThemeWeightedEnemySpawnWeight(entry, themeTuning));
       const supportGroup = variantHasSupportBehavior(variant) && roomyEnoughForSupport;
       if (supportGroup) {
-        spawnSupportUserGroup(platform, variant, unlockedVariants, enemyScaling, surfaceHazard);
+        spawnSupportUserGroup(platform, variant, unlockedVariants, enemyScaling, surfaceHazard, themeTuning);
       } else {
         const spawnX = pickSafeUserSpawnX(platform, variant, surfaceHazard);
         spawnUserFromVariant(platform, variant, spawnX, enemyScaling);
@@ -3270,19 +3372,20 @@ function spawnUserFromVariant(platform, variant, spawnX, enemyScaling, options =
   resetUserBehaviorTimers(user);
   user.assetColliderKey = user.spriteKey;
   if (hasUpgrade("maintenanceWindow")) {
-    user.snareTimer = Math.max(user.snareTimer, 2.6);
+    user.snareTimer = Math.max(user.snareTimer, 2.0 + getUpgradeCount("maintenanceWindow") * 0.6);
   }
   if (hasUpgrade("outOfOffice") && getUserRangedBehavior(user).enabled) {
-    user.shootCooldownMultiplier *= 1.25;
-    user.shootTimer *= 1.2;
+    const outOfOfficeMultiplier = 1 + getUpgradeCount("outOfOffice") * 0.22;
+    user.shootCooldownMultiplier *= outOfOfficeMultiplier;
+    user.shootTimer *= outOfOfficeMultiplier;
   }
   users.push(user);
   return user;
 }
 
-function spawnSupportUserGroup(platform, supportVariant, unlockedVariants, enemyScaling, hazardZone) {
+function spawnSupportUserGroup(platform, supportVariant, unlockedVariants, enemyScaling, hazardZone, themeTuning = getThemeTuning()) {
   const escortPool = unlockedVariants.filter(variantCanEscortSupport);
-  const escortVariant = pickWeighted(escortPool.length ? escortPool : unlockedVariants, (entry) => entry.behavior?.spawnWeight ?? 1);
+  const escortVariant = pickWeighted(escortPool.length ? escortPool : unlockedVariants, (entry) => getThemeWeightedEnemySpawnWeight(entry, themeTuning));
   const supportFirst = Math.random() > 0.5;
   const supportX = supportFirst
     ? platform.x + 28
@@ -3329,6 +3432,7 @@ function userHasNearbySupportTarget(supportUser) {
 }
 
 function ensureSupportEnemiesHaveEscorts(enemyScaling) {
+  const themeTuning = getThemeTuning(currentLevelConfig.theme);
   const unlockedVariants = USER_VARIANTS.filter((variant) => currentLevel >= (variant.behavior?.unlockLevel || 1));
   const escortPool = unlockedVariants.filter(variantCanEscortSupport);
 
@@ -3342,7 +3446,7 @@ function ensureSupportEnemiesHaveEscorts(enemyScaling) {
       continue;
     }
 
-    const escortVariant = pickWeighted(escortPool.length ? escortPool : unlockedVariants, (entry) => entry.behavior?.spawnWeight ?? 1);
+    const escortVariant = pickWeighted(escortPool.length ? escortPool : unlockedVariants, (entry) => getThemeWeightedEnemySpawnWeight(entry, themeTuning));
     if (!escortVariant) {
       continue;
     }
@@ -3471,6 +3575,19 @@ function getBossSourceInvincibilityDuration(source) {
   return 0;
 }
 
+function applyDamageRecoveryUpgrades(extraReflexInvincibility = 0) {
+  const quickRecoveryCount = getUpgradeCount("quickRecovery");
+  if (quickRecoveryCount > 0) {
+    player.quickRecoveryTimer = Math.max(player.quickRecoveryTimer, 2.0 + quickRecoveryCount * 0.5);
+  }
+
+  const vMotionReflexCount = getUpgradeCount("vMotionReflex");
+  if (vMotionReflexCount > 0) {
+    player.quickRecoveryTimer = Math.max(player.quickRecoveryTimer, 3.0 + vMotionReflexCount * 0.6);
+    player.invincibleTimer = Math.max(player.invincibleTimer, 0.85 + vMotionReflexCount * 0.2 + extraReflexInvincibility);
+  }
+}
+
 function damagePlayer(options = {}) {
   if (godModeEnabled) {
     return;
@@ -3485,8 +3602,9 @@ function damagePlayer(options = {}) {
   const bossInvincibilityDuration = getBossSourceInvincibilityDuration(source);
 
   if (isBossSource && player.bossGraceTimer > 0) {
-    if (hasUpgrade("managerialImmunity")) {
-      player.invincibleTimer = Math.max(player.invincibleTimer, 0.45);
+    const managerialImmunityCount = getUpgradeCount("managerialImmunity");
+    if (managerialImmunityCount > 0) {
+      player.invincibleTimer = Math.max(player.invincibleTimer, managerialImmunityCount * 0.45);
     }
     return;
   }
@@ -3510,13 +3628,7 @@ function damagePlayer(options = {}) {
     traitState.drPlanUsed = true;
     player.invincibleTimer = Math.max(player.invincibleTimer, player.invincibleDuration + 0.2);
     player.hurtTimer = 0.18;
-    if (hasUpgrade("quickRecovery")) {
-      player.quickRecoveryTimer = Math.max(player.quickRecoveryTimer, 2.5);
-    }
-    if (hasUpgrade("vMotionReflex")) {
-      player.quickRecoveryTimer = Math.max(player.quickRecoveryTimer, 3.6);
-      player.invincibleTimer = Math.max(player.invincibleTimer, 1.0);
-    }
+    applyDamageRecoveryUpgrades();
     markDamageReset();
     syncHud();
     return;
@@ -3526,13 +3638,7 @@ function damagePlayer(options = {}) {
     traitState.emergencySnapshotUsed = true;
     player.snapshotShield = Math.max(player.snapshotShield, 1);
     player.invincibleTimer = Math.max(player.invincibleTimer, player.invincibleDuration + 0.4);
-    if (hasUpgrade("quickRecovery")) {
-      player.quickRecoveryTimer = Math.max(player.quickRecoveryTimer, 2.5);
-    }
-    if (hasUpgrade("vMotionReflex")) {
-      player.quickRecoveryTimer = Math.max(player.quickRecoveryTimer, 3.6);
-      player.invincibleTimer = Math.max(player.invincibleTimer, 1.1);
-    }
+    applyDamageRecoveryUpgrades(0.1);
     markDamageReset();
     syncHud();
     return;
@@ -3544,18 +3650,13 @@ function damagePlayer(options = {}) {
     ? Math.max(player.invincibleDuration, bossInvincibilityDuration)
     : player.invincibleDuration;
   player.hurtTimer = 0.28;
+  const managerialImmunityCount = getUpgradeCount("managerialImmunity");
   player.bossGraceTimer = isBossSource
-    ? bossGraceDuration + (hasUpgrade("managerialImmunity") ? 0.75 : 0)
+    ? bossGraceDuration + managerialImmunityCount * 0.45
     : 0;
   spawnImpactParticles(player.x + player.w / 2, player.y + player.h * 0.45, "#ff5b6e", 10, { speedMin: 120, speedMax: 320 });
   addScreenShake(isBossSource ? 6 : 8, isBossSource ? 0.14 : 0.18);
-  if (hasUpgrade("quickRecovery")) {
-    player.quickRecoveryTimer = Math.max(player.quickRecoveryTimer, 2.5);
-  }
-  if (hasUpgrade("vMotionReflex")) {
-    player.quickRecoveryTimer = Math.max(player.quickRecoveryTimer, 3.6);
-    player.invincibleTimer = Math.max(player.invincibleTimer, 1.0);
-  }
+  applyDamageRecoveryUpgrades();
   markDamageReset();
   syncHud();
 
@@ -3760,10 +3861,10 @@ function throwKeyboard() {
   player.facing = throwPlan.facing;
   const dir = throwPlan.facing;
   const pickupDamageBonus = player.pickupDamageTimer > 0 ? 1 : 0;
-  const critChance = getUpgradeCount("critIncident") * 0.12;
+  const critChance = getUpgradeCount("critIncident") * 0.1;
   const critMultiplier = Math.random() < critChance ? 2 : 1;
   const pierceRemaining = (currentStats.basePierce || 0) + getUpgradeCount("piercingKeys");
-  const bouncesRemaining = (currentStats.baseBounces || 0) + (hasUpgrade("bounceKeys") ? 1 : 0);
+  const bouncesRemaining = (currentStats.baseBounces || 0) + getUpgradeCount("bounceKeys");
   const baseKeyboard = {
     x: throwPlan.x,
     y: throwPlan.y,
@@ -3780,8 +3881,10 @@ function throwKeyboard() {
     pierceRemaining,
     bouncesRemaining,
     canReturn: hasUpgrade("datastoreEcho"),
+    returnsRemaining: getUpgradeCount("datastoreEcho"),
     hasReturned: false,
     fragmentOnHit: hasUpgrade("fragmentingKeyboard"),
+    fragmentCount: getUpgradeCount("fragmentingKeyboard") * 2,
     homingEnabled: hasUpgrade("autoAim"),
     homingTarget: throwPlan.assisted ? getAutoAimTarget(dir, throwPlan.x + throwPlan.w / 2, throwPlan.y + throwPlan.h / 2, currentStats)?.entity || null : null,
     armorPierce: currentStats.armorPierce || 0,
@@ -3791,19 +3894,22 @@ function throwKeyboard() {
   };
   keyboards.push(baseKeyboard);
   if (hasUpgrade("replyAll")) {
-    [-1, 1].forEach((offset) => {
+    const replyOffsets = getUpgradeCount("replyAll") > 1 ? [-2, -1, 1, 2] : [-1, 1];
+    replyOffsets.forEach((offset) => {
       keyboards.push({
         ...baseKeyboard,
         x: baseKeyboard.x,
-        y: baseKeyboard.y + offset * 6,
-        w: Math.max(18, Math.round(baseKeyboard.w * 0.8)),
-        h: Math.max(10, Math.round(baseKeyboard.h * 0.8)),
-        vy: baseKeyboard.vy + offset * 95,
-        damage: Math.max(1, Math.ceil(baseKeyboard.damage * 0.5)),
+        y: baseKeyboard.y + offset * 5,
+        w: Math.max(18, Math.round(baseKeyboard.w * 0.76)),
+        h: Math.max(10, Math.round(baseKeyboard.h * 0.76)),
+        vy: baseKeyboard.vy + offset * 78,
+        damage: Math.max(1, Math.ceil(baseKeyboard.damage * 0.45)),
         spin: baseKeyboard.spin * 1.1,
         bouncesRemaining: 0,
         canReturn: false,
+        returnsRemaining: 0,
         fragmentOnHit: false,
+        fragmentCount: 0,
         pierceRemaining: Math.max(0, baseKeyboard.pierceRemaining - 1),
         armorPierce: baseKeyboard.armorPierce,
         hitSnareDuration: Math.max(0, baseKeyboard.hitSnareDuration * 0.6),
@@ -4446,17 +4552,20 @@ function spawnKeyboardFragments(keyboard) {
     return;
   }
   keyboard.fragmentSpawned = true;
-  [-1, 1].forEach((dir) => {
+  const fragmentCount = Math.max(2, keyboard.fragmentCount || 2);
+  for (let i = 0; i < fragmentCount; i += 1) {
+    const spreadIndex = i - (fragmentCount - 1) / 2;
+    const dir = spreadIndex === 0 ? (Math.random() > 0.5 ? 1 : -1) : Math.sign(spreadIndex);
     keyboards.push({
       x: keyboard.x,
       y: keyboard.y,
       w: Math.max(14, Math.round(keyboard.w * 0.62)),
       h: Math.max(8, Math.round(keyboard.h * 0.62)),
-      vx: (keyboard.vx || 0) * 0.45 + dir * 180,
-      vy: -240 + dir * 40,
-      damage: Math.max(1, Math.ceil(keyboard.damage * 0.5)),
+      vx: (keyboard.vx || 0) * 0.35 + spreadIndex * 115,
+      vy: -260 + Math.abs(spreadIndex) * 34,
+      damage: Math.max(1, Math.ceil(keyboard.damage * 0.45)),
       rotation: dir * 0.18,
-      spin: dir * 11,
+      spin: dir * (10 + Math.abs(spreadIndex) * 1.5),
       hitbox: { left: 2, right: 2, top: 1, bottom: 1 },
       assetColliderKey: "keyboard",
       assetColliderOptions: { alignY: "center", mode: "cover" },
@@ -4464,10 +4573,11 @@ function spawnKeyboardFragments(keyboard) {
       bouncesRemaining: 0,
       canReturn: false,
       hasReturned: true,
+      returnsRemaining: 0,
       fragmentOnHit: false,
       hitTargets: new Set(),
     });
-  });
+  }
 }
 
 function updateKeyboards(dt) {
@@ -4503,7 +4613,8 @@ function updateKeyboards(dt) {
       keyboard.x + keyboard.w < cameraX - 240 ||
       keyboard.x > cameraX + canvas.width + 240
     ) {
-      if (keyboard.canReturn && !keyboard.hasReturned) {
+      if (keyboard.canReturn && (keyboard.returnsRemaining || 0) > 0) {
+        keyboard.returnsRemaining -= 1;
         keyboard.hasReturned = true;
         keyboard.vx *= -0.88;
         keyboard.vy = -260;
@@ -4523,7 +4634,8 @@ function updateKeyboards(dt) {
           keyboard.vy = -Math.max(180, Math.abs(keyboard.vy) * 0.52);
           keyboard.vx *= 0.94;
           keyboard.bouncesRemaining -= 1;
-        } else if (keyboard.canReturn && !keyboard.hasReturned) {
+        } else if (keyboard.canReturn && (keyboard.returnsRemaining || 0) > 0) {
+          keyboard.returnsRemaining -= 1;
           keyboard.hasReturned = true;
           keyboard.vx *= -0.9;
           keyboard.vy = -220;
@@ -4589,12 +4701,15 @@ function updateKeyboards(dt) {
       if (keyboard.bossFreezeDuration > 0) {
         boss.freezeTimer = Math.max(boss.freezeTimer || 0, keyboard.bossFreezeDuration);
       }
-      if (hasUpgrade("changeFreeze")) {
-        boss.freezeTimer = Math.max(boss.freezeTimer || 0, Math.max(0.45, (keyboard.bossFreezeDuration || 0) + 0.22));
+      const changeFreezeCount = getUpgradeCount("changeFreeze");
+      if (changeFreezeCount > 0 && (boss.changeFreezeCooldown || 0) <= 0) {
+        boss.freezeTimer = Math.max(boss.freezeTimer || 0, 0.45 + (changeFreezeCount - 1) * 0.14);
+        boss.changeFreezeCooldown = Math.max(0.84, 1.0 - (changeFreezeCount - 1) * 0.08);
       }
-      if (hasUpgrade("pressureResponse") && !traitState.pressureResponseTriggered && boss.hp <= boss.maxHp * 0.5) {
+      const pressureResponseCount = getUpgradeCount("pressureResponse");
+      if (pressureResponseCount > 0 && !traitState.pressureResponseTriggered && boss.hp <= boss.maxHp * 0.5) {
         traitState.pressureResponseTriggered = true;
-        player.pressureResponseTimer = Math.max(player.pressureResponseTimer, 6);
+        player.pressureResponseTimer = Math.max(player.pressureResponseTimer, 6 + (pressureResponseCount - 1) * 2);
       }
       spawnImpactParticles(boss.x + boss.w / 2, boss.y + boss.h * 0.42, currentLevelConfig.theme.glow, boss.hp <= 0 ? 18 : 9, {
         speedMin: 110,
@@ -5120,6 +5235,7 @@ function updateBoss(dt) {
   boss.dashBurstTimer = Math.max(0, boss.dashBurstTimer - dt);
   boss.pursuitTimer = Math.max(0, boss.pursuitTimer - dt);
   boss.freezeTimer = Math.max(0, (boss.freezeTimer || 0) - dt);
+  boss.changeFreezeCooldown = Math.max(0, (boss.changeFreezeCooldown || 0) - dt);
 
   const bossSpeed = boss.profile.speed * currentLevelConfig.bossSpeedScale;
   const effectiveBossSpeed = boss.freezeTimer > 0 ? bossSpeed * 0.58 : bossSpeed;
@@ -5402,26 +5518,33 @@ function updateSpecialHazards(now) {
     }
 
     if (zone.kind === "dataLeak") {
-      if (hasUpgrade("leakSkates")) {
-        player.quickRecoveryTimer = Math.max(player.quickRecoveryTimer, 0.5);
+      const leakSkatesCount = getUpgradeCount("leakSkates");
+      if (leakSkatesCount > 0) {
+        player.quickRecoveryTimer = Math.max(player.quickRecoveryTimer, 0.5 + (leakSkatesCount - 1) * 0.25);
       } else {
-        player.slipTimer = Math.max(player.slipTimer, hasUpgrade("momentumCache") ? 0.12 : 0.28);
+        const momentumCacheCount = getUpgradeCount("momentumCache");
+        player.slipTimer = Math.max(player.slipTimer, Math.max(0.08, 0.28 - momentumCacheCount * 0.05));
       }
       continue;
     }
 
     if (zone.kind === "cableMess") {
-      const cablePenalty = hasUpgrade("cableManagement") ? 0.08 : hasUpgrade("momentumCache") ? 0.14 : 0.24;
+      const cableManagementCount = getUpgradeCount("cableManagement");
+      const momentumCacheCount = getUpgradeCount("momentumCache");
+      const cablePenalty = cableManagementCount > 0
+        ? Math.max(0.04, 0.24 - cableManagementCount * 0.06)
+        : Math.max(0.1, 0.24 - momentumCacheCount * 0.04);
       player.snareTimer = Math.max(player.snareTimer, cablePenalty);
       player.jumpDebuffTimer = Math.max(player.jumpDebuffTimer, cablePenalty);
       continue;
     }
 
     if (zone.kind === "vent" && isVentHazardActive(zone, now)) {
-      player.vy = Math.min(player.vy, hasUpgrade("ventRider") ? -1040 : -840);
+      const ventRiderCount = getUpgradeCount("ventRider");
+      player.vy = Math.min(player.vy, ventRiderCount > 0 ? -(840 + ventRiderCount * 200) : -840);
       player.grounded = false;
-      if (hasUpgrade("ventRider")) {
-        player.invincibleTimer = Math.max(player.invincibleTimer, 0.35);
+      if (ventRiderCount > 0) {
+        player.invincibleTimer = Math.max(player.invincibleTimer, 0.25 + ventRiderCount * 0.12);
       }
       spawnImpactParticles(player.x + player.w / 2, activeZone.y + 8, zone.color, 7, { speedMin: 110, speedMax: 240, gravity: 380 });
       continue;
@@ -5434,8 +5557,9 @@ function updateSpecialHazards(now) {
       zone.lastHitCycle = cycleIndex;
       spawnImpactParticles(player.x + player.w / 2, player.y + player.h * 0.45, zone.color, 8, { speedMin: 120, speedMax: 260 });
       addScreenShake(5, 0.12);
-      if (hasUpgrade("shockInsulation")) {
-        player.invincibleTimer = Math.max(player.invincibleTimer, 0.45);
+      const shockInsulationCount = getUpgradeCount("shockInsulation");
+      if (shockInsulationCount > 0) {
+        player.invincibleTimer = Math.max(player.invincibleTimer, 0.35 + shockInsulationCount * 0.1);
       } else {
         damagePlayer({ source: "hazard" });
       }
@@ -5453,8 +5577,9 @@ function updateSpecialHazards(now) {
       player.grounded = false;
       spawnImpactParticles(player.x + player.w / 2, player.y + player.h * 0.5, zone.color, 12, { speedMin: 150, speedMax: 340, sizeMin: 4, sizeMax: 8 });
       addScreenShake(7, 0.16);
-      if (hasUpgrade("shockInsulation")) {
-        player.invincibleTimer = Math.max(player.invincibleTimer, 0.45);
+      const shockInsulationCount = getUpgradeCount("shockInsulation");
+      if (shockInsulationCount > 0) {
+        player.invincibleTimer = Math.max(player.invincibleTimer, 0.35 + shockInsulationCount * 0.1);
       } else {
         damagePlayer({ source: "hazard" });
       }
@@ -5467,7 +5592,8 @@ function updateSpecialHazards(now) {
       const colliderOffset = getEntityColliderOffset(player);
       const dt = zone.lastTouchTime > 0 ? Math.min(0.05, (now - zone.lastTouchTime) / 1000) : 1 / 60;
       const pushDir = Math.sign(activeZone.vx || 0) || 1;
-      const pushSpeed = Math.max(190, Math.abs(activeZone.vx || 0) * 0.82) * (hasUpgrade("hazardRouting") ? 0.68 : 1);
+      const hazardRoutingMultiplier = Math.pow(0.72, getUpgradeCount("hazardRouting"));
+      const pushSpeed = Math.max(190, Math.abs(activeZone.vx || 0) * 0.82) * hazardRoutingMultiplier;
       let resolveSide = pushDir > 0 ? "right" : "left";
 
       if (previousPlayerBox.x + previousPlayerBox.w <= zoneBox.x + 1) {
@@ -5490,7 +5616,7 @@ function updateSpecialHazards(now) {
       }
 
       player.x += pushDir * pushSpeed * dt;
-      player.vx = moveTowards(player.vx, pushDir * Math.max(220, Math.abs(activeZone.vx || 0) * 0.9) * (hasUpgrade("hazardRouting") ? 0.72 : 1), 2200 * dt);
+      player.vx = moveTowards(player.vx, pushDir * Math.max(220, Math.abs(activeZone.vx || 0) * 0.9) * hazardRoutingMultiplier, 2200 * dt);
       player.x = Math.max(0, Math.min(worldWidth - player.w, player.x));
 
       zone.lastTouchTime = now;
@@ -5512,9 +5638,10 @@ function updateTickets(time) {
       player.score += 1;
       runScore += 1;
       runStats.vmsRestored += 1;
-      if (hasUpgrade("bonusRecovery")) {
+      const bonusRecoveryCount = getUpgradeCount("bonusRecovery");
+      if (bonusRecoveryCount > 0) {
         traitState.bonusRecoveryTickets += 1;
-        if (traitState.bonusRecoveryTickets >= 4) {
+        if (traitState.bonusRecoveryTickets >= Math.max(2, 5 - bonusRecoveryCount)) {
           traitState.bonusRecoveryTickets = 0;
           player.snapshotShield = Math.min(player.snapshotShield + 1, 2);
         }
@@ -5725,22 +5852,14 @@ function drawPlatforms() {
         ctx.fillStyle = "#173656";
         drawRoundRect(x, platform.y + 24, 28, 16, 4);
       }
-    } else if (platform.kind === "rack") {
-      drawSpriteFit(assets[platform.spriteKey] || assets.rack, sx, platform.y - 4, platform.w, 108, {
-        mode: getAdaptivePlatformMode(platform.spriteKey || "rack", platform.w, 108),
-      });
-    } else if (platform.kind === "switch") {
-      drawSpriteFit(assets[platform.spriteKey] || assets.switch, sx, platform.y - 4, platform.w, 92, {
-        mode: getAdaptivePlatformMode(platform.spriteKey || "switch", platform.w, 92),
-      });
-    } else if (platform.kind === "database") {
-      drawSpriteFit(assets[platform.spriteKey] || assets.database, sx, platform.y - 10, platform.w, 116, {
-        mode: getAdaptivePlatformMode(platform.spriteKey || "database", platform.w, 116),
-      });
-    } else if (platform.kind === "esxi") {
-      drawSpriteFit(assets[platform.spriteKey] || assets.esxi, sx, platform.y - 4, platform.w, 108, {
-        mode: getAdaptivePlatformMode(platform.spriteKey || "esxi", platform.w, 108),
-      });
+    } else {
+      const renderConfig = getPlatformRenderConfig(platform.kind);
+      const assetKey = platform.spriteKey || renderConfig?.asset;
+      if (renderConfig && assets[assetKey]) {
+        drawSpriteFit(assets[assetKey], sx, platform.y + renderConfig.offsetY, platform.w, renderConfig.renderH, {
+          mode: getAdaptivePlatformMode(assetKey, platform.w, renderConfig.renderH, renderConfig.mode || "contain"),
+        });
+      }
     }
 
     if (platformWarningZone) {
