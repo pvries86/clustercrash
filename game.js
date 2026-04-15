@@ -72,6 +72,18 @@ const SPECIAL_HAZARD_TYPES = {
     renderTopPad: 6,
     surfaceInset: 4,
   },
+  cableMess: {
+    spriteKey: "cableMessHazard",
+    label: "CABLE",
+    color: "#ff9f4d",
+    unlockLevel: 2,
+    spawnWeight: 3,
+    allowedOnFloor: true,
+    widthFactor: 0.28,
+    height: 16,
+    renderTopPad: 6,
+    surfaceInset: 4,
+  },
   static: {
     spriteKey: "staticHazard",
     label: "STATIC",
@@ -86,6 +98,36 @@ const SPECIAL_HAZARD_TYPES = {
     period: 1.6,
     activeWindowStart: 0.52,
     activeWindowEnd: 0.82,
+  },
+  vent: {
+    spriteKey: "ventHazard",
+    label: "VENT",
+    color: "#ff8b5b",
+    unlockLevel: 4,
+    spawnWeight: 2,
+    allowedOnFloor: true,
+    widthFactor: 0.18,
+    height: 28,
+    renderTopPad: 12,
+    surfaceInset: 4,
+    period: 1.8,
+    activeWindowStart: 0,
+    activeWindowEnd: 1,
+  },
+  backupWindow: {
+    spriteKey: "backupWindowHazard",
+    label: "BACKUP",
+    color: "#8fd3ff",
+    unlockLevel: 4,
+    spawnWeight: 2,
+    allowedOnFloor: true,
+    widthFactor: 0.16,
+    height: 44,
+    renderTopPad: 0,
+    surfaceInset: 4,
+    period: 3.1,
+    sweepPadding: 0,
+    sweepOvershoot: 10,
   },
   reboot: {
     spriteKey: "rebootHazard",
@@ -103,33 +145,6 @@ const SPECIAL_HAZARD_TYPES = {
     burstWindowStart: 0.7,
     burstWindowEnd: 0.92,
   },
-  cableMess: {
-    spriteKey: "cableMessHazard",
-    label: "CABLE",
-    color: "#ff9f4d",
-    unlockLevel: 2,
-    spawnWeight: 3,
-    allowedOnFloor: true,
-    widthFactor: 0.28,
-    height: 16,
-    renderTopPad: 6,
-    surfaceInset: 4,
-  },
-  vent: {
-    spriteKey: "ventHazard",
-    label: "VENT",
-    color: "#ff8b5b",
-    unlockLevel: 4,
-    spawnWeight: 2,
-    allowedOnFloor: true,
-    widthFactor: 0.18,
-    height: 28,
-    renderTopPad: 12,
-    surfaceInset: 4,
-    period: 1.8,
-    activeWindowStart: 0,
-    activeWindowEnd: 1,
-  },
   diskFailure: {
     label: "DISK",
     color: "#ff6b81",
@@ -144,21 +159,6 @@ const SPECIAL_HAZARD_TYPES = {
     warningWindowStart: 0.68,
     burstWindowStart: 0.84,
     burstWindowEnd: 0.98,
-  },
-  backupWindow: {
-    spriteKey: "backupWindowHazard",
-    label: "BACKUP",
-    color: "#8fd3ff",
-    unlockLevel: 4,
-    spawnWeight: 2,
-    allowedOnFloor: true,
-    widthFactor: 0.16,
-    height: 44,
-    renderTopPad: 0,
-    surfaceInset: 4,
-    period: 3.1,
-    sweepPadding: 0,
-    sweepOvershoot: 10,
   },
 };
 const MANAGER_BOSSES = ["Peter", "Richard R", "Richard A", "Chris", "Denise", "Sander", "Walter", "Salah", "Patrick"];
@@ -391,96 +391,9 @@ const USER_VARIANTS = [
     },
   },
   {
-    kind: "armored",
-    spriteKey: "armoredUser",
-    speedFactor: 0.85,
-    w: 62,
-    h: 80,
-    hp: 4,
-    jumpPower: 0,
-    armor: 1,
-    maxDamagePerHit: 2,
-    tint: "#8a7dff",
-    hitbox: { left: 14, right: 14, top: 12, bottom: 3 },
-    motionPhase: 0.35,
-    motionStyle: { bobScale: 0.55, idleBobScale: 0.45, tiltScale: 0.65, strideScale: 0.75, legTiltScale: 0.6, squashScale: 0.5, torsoLiftScale: 0.55 },
-    behavior: {
-      unlockLevel: 3,
-      spawnWeight: 3,
-      hpScaling: "heavy",
-      jump: {
-        enabled: false,
-      },
-      ranged: {
-        enabled: false,
-      },
-    },
-  },
-  {
-    kind: "armoredElite",
-    spriteKey: "armoredHeavyUser",
-    speedFactor: 0.92,
-    w: 66,
-    h: 84,
-    hp: 6,
-    jumpPower: 0,
-    armor: 2,
-    maxDamagePerHit: 1,
-    tint: "#6f86ff",
-    hitbox: { left: 15, right: 15, top: 12, bottom: 3 },
-    motionPhase: 0.18,
-    motionStyle: { bobScale: 0.45, idleBobScale: 0.38, tiltScale: 0.55, strideScale: 0.65, legTiltScale: 0.5, squashScale: 0.42, torsoLiftScale: 0.48 },
-    behavior: {
-      unlockLevel: BOSS_LEVEL_INTERVAL + 2,
-      spawnWeight: 2,
-      hpScaling: "heavy",
-      jump: {
-        enabled: false,
-      },
-      ranged: {
-        enabled: false,
-      },
-    },
-  },
-  {
-    kind: "auditor",
-    spriteKey: "auditorUser",
-    speedFactor: 0.58,
-    w: 68,
-    h: 86,
-    hp: 7,
-    jumpPower: 0,
-    armor: 2,
-    maxDamagePerHit: 2,
-    tint: "#9b9b9b",
-    hitbox: { left: 16, right: 16, top: 12, bottom: 3 },
-    motionPhase: 0.4,
-    motionStyle: { bobScale: 0.36, idleBobScale: 0.34, tiltScale: 0.42, strideScale: 0.52, legTiltScale: 0.45, squashScale: 0.36, torsoLiftScale: 0.42 },
-    behavior: {
-      unlockLevel: BOSS_LEVEL_INTERVAL + 1,
-      spawnWeight: 4,
-      hpScaling: "heavy",
-      jump: {
-        enabled: false,
-      },
-      ranged: {
-        enabled: false,
-      },
-      support: {
-        enabled: true,
-        range: 230,
-        speedMultiplier: 1.14,
-        shootCooldownMultiplier: 0.82,
-        armorBonus: 1,
-        color: "#d6dde6",
-        label: "AUDIT",
-      },
-    },
-  },
-  {
     kind: "spamCaller",
     spriteKey: "spamCallerUser",
-    speedFactor: 1.34,
+    speedFactor: 1.08,
     w: 50,
     h: 68,
     hp: 1,
@@ -507,10 +420,69 @@ const USER_VARIANTS = [
       },
       burst: {
         enabled: true,
-        cooldownMin: 1.4,
-        cooldownMax: 2.7,
-        duration: 0.52,
-        speedMultiplier: 2.25,
+        cooldownMin: 1.0,
+        cooldownMax: 1.8,
+        windup: 0.28,
+        windupSpeedMultiplier: 0.18,
+        duration: 0.44,
+        speedMultiplier: 3.15,
+      },
+    },
+  },
+  {
+    kind: "armored",
+    spriteKey: "armoredUser",
+    speedFactor: 0.85,
+    w: 62,
+    h: 80,
+    hp: 4,
+    jumpPower: 0,
+    armor: 1,
+    maxDamagePerHit: 2,
+    tint: "#8a7dff",
+    hitbox: { left: 14, right: 14, top: 12, bottom: 3 },
+    motionPhase: 0.35,
+    motionStyle: { bobScale: 0.55, idleBobScale: 0.45, tiltScale: 0.65, strideScale: 0.75, legTiltScale: 0.6, squashScale: 0.5, torsoLiftScale: 0.55 },
+    behavior: {
+      unlockLevel: 3,
+      spawnWeight: 3,
+      hpScaling: "heavy",
+      jump: {
+        enabled: false,
+      },
+      ranged: {
+        enabled: false,
+      },
+    },
+  },
+  {
+    kind: "escalationUser",
+    spriteKey: "escalationUserSprite",
+    speedFactor: 0.88,
+    w: 54,
+    h: 72,
+    hp: 1,
+    jumpPower: 0,
+    tint: "#ff5b6e",
+    hitbox: { left: 12, right: 12, top: 10, bottom: 2 },
+    motionPhase: 0.25,
+    motionStyle: { bobScale: 0.95, idleBobScale: 0.75, tiltScale: 0.95, strideScale: 1, legTiltScale: 1, squashScale: 0.9, torsoLiftScale: 0.9 },
+    behavior: {
+      unlockLevel: 5,
+      spawnWeight: 4,
+      hpScaling: "light",
+      jump: {
+        enabled: false,
+      },
+      ranged: {
+        enabled: false,
+      },
+      escalation: {
+        enabled: true,
+        interval: 4.0,
+        maxStacks: 3,
+        hpPerStack: 1,
+        speedPerStack: 0.18,
       },
     },
   },
@@ -527,7 +499,7 @@ const USER_VARIANTS = [
     motionPhase: 0.2,
     motionStyle: { bobScale: 0.9, idleBobScale: 0.95, tiltScale: 1.25, strideScale: 0.65, legTiltScale: 0.55, squashScale: 0.8, torsoLiftScale: 1.1, torsoShiftScale: 1.35 },
     behavior: {
-      unlockLevel: BOSS_LEVEL_INTERVAL + 1,
+      unlockLevel: 5,
       spawnWeight: 2,
       hpScaling: "light",
       jump: {
@@ -557,21 +529,21 @@ const USER_VARIANTS = [
     },
   },
   {
-    kind: "changeManager",
-    spriteKey: "changeManagerUser",
-    speedFactor: 0.62,
-    w: 60,
-    h: 78,
-    hp: 3,
+    kind: "auditor",
+    spriteKey: "auditorUser",
+    speedFactor: 0.58,
+    w: 68,
+    h: 86,
+    hp: 7,
     jumpPower: 0,
-    armor: 1,
+    armor: 2,
     maxDamagePerHit: 2,
-    tint: "#b98cff",
-    hitbox: { left: 13, right: 13, top: 11, bottom: 3 },
-    motionPhase: 0.48,
-    motionStyle: { bobScale: 0.62, idleBobScale: 0.72, tiltScale: 0.72, strideScale: 0.62, legTiltScale: 0.58, squashScale: 0.62, torsoLiftScale: 0.95, torsoShiftScale: 1.05 },
+    tint: "#9b9b9b",
+    hitbox: { left: 16, right: 16, top: 12, bottom: 3 },
+    motionPhase: 0.4,
+    motionStyle: { bobScale: 0.36, idleBobScale: 0.34, tiltScale: 0.42, strideScale: 0.52, legTiltScale: 0.45, squashScale: 0.36, torsoLiftScale: 0.42 },
     behavior: {
-      unlockLevel: BOSS_LEVEL_INTERVAL + 2,
+      unlockLevel: 6,
       spawnWeight: 4,
       hpScaling: "heavy",
       jump: {
@@ -582,88 +554,12 @@ const USER_VARIANTS = [
       },
       support: {
         enabled: true,
-        range: 260,
-        speedMultiplier: 1.1,
-        shootCooldownMultiplier: 0.8,
-        armorBonus: 0,
-        color: "#b98cff",
-        label: "CAB",
-      },
-      denial: {
-        enabled: true,
-        range: 760,
-        cooldownMin: 3.2,
-        cooldownMax: 5.0,
-        warnTime: 0.75,
-        duration: 1.55,
-        w: 104,
-        h: 44,
-        color: "#b98cff",
-        label: "CHANGE",
-      },
-    },
-  },
-  {
-    kind: "ransomwarePopup",
-    spriteKey: "ransomwarePopupUser",
-    speedFactor: 0,
-    w: 58,
-    h: 52,
-    hp: 1,
-    jumpPower: 0,
-    tint: "#ff4d8d",
-    hitbox: { left: 12, right: 12, top: 10, bottom: 6 },
-    motionPhase: 0.1,
-    motionStyle: { bobScale: 0.2, idleBobScale: 1.1, tiltScale: 0.2, strideScale: 0.1, legTiltScale: 0.1, squashScale: 1.0, torsoLiftScale: 1.1 },
-    behavior: {
-      unlockLevel: BOSS_LEVEL_INTERVAL + 1,
-      spawnWeight: 4,
-      hpScaling: "light",
-      jump: {
-        enabled: false,
-      },
-      ranged: {
-        enabled: false,
-      },
-      popup: {
-        enabled: true,
-        hiddenMin: 1.4,
-        hiddenMax: 3.0,
-        warningTime: 0.85,
-        activeMin: 0.8,
-        activeMax: 1.25,
-        label: "LOCKED",
-      },
-    },
-  },
-  {
-    kind: "escalationUser",
-    spriteKey: "escalationUserSprite",
-    speedFactor: 0.88,
-    w: 54,
-    h: 72,
-    hp: 1,
-    jumpPower: 0,
-    tint: "#ff5b6e",
-    hitbox: { left: 12, right: 12, top: 10, bottom: 2 },
-    motionPhase: 0.25,
-    motionStyle: { bobScale: 0.95, idleBobScale: 0.75, tiltScale: 0.95, strideScale: 1, legTiltScale: 1, squashScale: 0.9, torsoLiftScale: 0.9 },
-    behavior: {
-      unlockLevel: BOSS_LEVEL_INTERVAL,
-      spawnWeight: 4,
-      hpScaling: "light",
-      jump: {
-        enabled: false,
-      },
-      ranged: {
-        enabled: false,
-      },
-      escalation: {
-        enabled: true,
-        interval: 4.0,
-        maxStacks: 3,
-        hpPerStack: 1,
-        speedPerStack: 0.18,
+        range: 230,
+        speedMultiplier: 1.14,
+        shootCooldownMultiplier: 0.82,
+        armorBonus: 1,
+        color: "#d6dde6",
+        label: "AUDIT",
       },
     },
   },
@@ -680,7 +576,7 @@ const USER_VARIANTS = [
     motionPhase: 0.32,
     motionStyle: { bobScale: 0.88, idleBobScale: 1, tiltScale: 1.18, strideScale: 0.62, legTiltScale: 0.52, squashScale: 0.82, torsoLiftScale: 1.12, torsoShiftScale: 1.35 },
     behavior: {
-      unlockLevel: BOSS_LEVEL_INTERVAL + 1,
+      unlockLevel: 6,
       spawnWeight: 4,
       hpScaling: "light",
       jump: {
@@ -713,6 +609,112 @@ const USER_VARIANTS = [
     },
   },
   {
+    kind: "ransomwarePopup",
+    spriteKey: "ransomwarePopupUser",
+    speedFactor: 0,
+    w: 58,
+    h: 52,
+    hp: 1,
+    jumpPower: 0,
+    tint: "#ff4d8d",
+    hitbox: { left: 12, right: 12, top: 10, bottom: 6 },
+    motionPhase: 0.1,
+    motionStyle: { bobScale: 0.2, idleBobScale: 1.1, tiltScale: 0.2, strideScale: 0.1, legTiltScale: 0.1, squashScale: 1.0, torsoLiftScale: 1.1 },
+    behavior: {
+      unlockLevel: 7,
+      spawnWeight: 4,
+      hpScaling: "light",
+      jump: {
+        enabled: false,
+      },
+      ranged: {
+        enabled: false,
+      },
+      popup: {
+        enabled: true,
+        hiddenMin: 1.4,
+        hiddenMax: 3.0,
+        warningTime: 0.85,
+        activeMin: 0.8,
+        activeMax: 1.25,
+        label: "LOCKED",
+      },
+    },
+  },
+  {
+    kind: "armoredElite",
+    spriteKey: "armoredHeavyUser",
+    speedFactor: 0.92,
+    w: 66,
+    h: 84,
+    hp: 6,
+    jumpPower: 0,
+    armor: 2,
+    maxDamagePerHit: 1,
+    tint: "#6f86ff",
+    hitbox: { left: 15, right: 15, top: 12, bottom: 3 },
+    motionPhase: 0.18,
+    motionStyle: { bobScale: 0.45, idleBobScale: 0.38, tiltScale: 0.55, strideScale: 0.65, legTiltScale: 0.5, squashScale: 0.42, torsoLiftScale: 0.48 },
+    behavior: {
+      unlockLevel: 9,
+      spawnWeight: 2,
+      hpScaling: "heavy",
+      jump: {
+        enabled: false,
+      },
+      ranged: {
+        enabled: false,
+      },
+    },
+  },
+  {
+    kind: "changeManager",
+    spriteKey: "changeManagerUser",
+    speedFactor: 0.62,
+    w: 60,
+    h: 78,
+    hp: 3,
+    jumpPower: 0,
+    armor: 1,
+    maxDamagePerHit: 2,
+    tint: "#b98cff",
+    hitbox: { left: 13, right: 13, top: 11, bottom: 3 },
+    motionPhase: 0.48,
+    motionStyle: { bobScale: 0.62, idleBobScale: 0.72, tiltScale: 0.72, strideScale: 0.62, legTiltScale: 0.58, squashScale: 0.62, torsoLiftScale: 0.95, torsoShiftScale: 1.05 },
+    behavior: {
+      unlockLevel: 9,
+      spawnWeight: 4,
+      hpScaling: "heavy",
+      jump: {
+        enabled: false,
+      },
+      ranged: {
+        enabled: false,
+      },
+      support: {
+        enabled: true,
+        range: 260,
+        speedMultiplier: 1.1,
+        shootCooldownMultiplier: 0.8,
+        armorBonus: 0,
+        color: "#b98cff",
+        label: "CAB",
+      },
+      denial: {
+        enabled: true,
+        range: 760,
+        cooldownMin: 3.2,
+        cooldownMax: 5.0,
+        warnTime: 0.75,
+        duration: 1.55,
+        w: 104,
+        h: 44,
+        color: "#b98cff",
+        label: "CHANGE",
+      },
+    },
+  },
+  {
     kind: "vip",
     spriteKey: "vipUser",
     speedFactor: 1.02,
@@ -727,7 +729,7 @@ const USER_VARIANTS = [
     motionPhase: 0.6,
     motionStyle: { bobScale: 0.8, idleBobScale: 0.7, tiltScale: 1.1, strideScale: 0.9, legTiltScale: 0.8, squashScale: 0.75, torsoLiftScale: 1.05, torsoShiftScale: 1.2 },
     behavior: {
-      unlockLevel: BOSS_LEVEL_INTERVAL + 2,
+      unlockLevel: 11,
       spawnWeight: 5,
       hpScaling: "heavy",
       jump: {
@@ -779,7 +781,7 @@ const ENEMY_GUIDE_TEXT = {
   },
   spamCaller: {
     title: "Spam Caller",
-    description: "Fragile sprinter. Rushes in short bursts and forces you to move before the platform gets crowded.",
+    description: "Fragile sprinter. Briefly winds up, then rushes in a sharp burst that punishes standing still.",
   },
   emailer: {
     title: "Email User",
@@ -795,7 +797,7 @@ const ENEMY_GUIDE_TEXT = {
   },
   escalationUser: {
     title: "Escalation User",
-    description: "Weak at first, but gains health and speed if left alive. Deal with it before the ticket gets hot.",
+    description: "Weak at first, but gains health and speed if left alive. Deal with it before priority escalates.",
   },
   ticketSpammer: {
     title: "Ticket Spammer",
@@ -1141,6 +1143,7 @@ let currentLevelConfig = {
   bossHp: 12,
   bossSpeedScale: 1,
   bossAttackScale: 1,
+  slaEscalationRate: 0,
   theme: {
     skyTop: "#07111f",
     skyMid: "#09152a",
@@ -1183,6 +1186,12 @@ let runStats = createRunStats();
 let runUpgrades = createRunUpgrades();
 let traitState = createTraitState();
 let currentUpgradeChoices = [];
+let slaEscalation = 0;
+let slaPriorityTier = 0;
+let slaStabilizedTimer = 0;
+let slaHudTimer = 0;
+let slaNoRestoreTimer = 0;
+let slaDispatchTimer = 0;
 let debugShowHitboxes = false;
 let debugShowPlatformTops = false;
 let debugBotEnabled = false;
@@ -1191,6 +1200,8 @@ let debugBotState = {
   direction: 1,
   jumpCooldown: 0,
   throwCooldown: 0,
+  stuckTimer: 0,
+  lastX: 0,
 };
 let pendingLevelRestart = null;
 let nextHazardId = 1;
@@ -1233,6 +1244,54 @@ function getBuildTraitNames(limit = 4) {
     .filter((entry) => !entry.stat && getUpgradeCount(entry.id) > 0)
     .slice(0, limit)
     .map((entry) => entry.name);
+}
+
+function getPickedUpgradeEntries() {
+  return UPGRADE_POOL
+    .map((entry) => ({ ...entry, count: getUpgradeCount(entry.id) }))
+    .filter((entry) => entry.count > 0);
+}
+
+function getBuildStatsText(options = {}) {
+  const stats = getPlayerStats();
+  const pierce = (stats.basePierce || 0) + getUpgradeCount("piercingKeys");
+  const bounces = (stats.baseBounces || 0) + getUpgradeCount("bounceKeys");
+  const returns = getUpgradeCount("datastoreEcho");
+  const parts = [
+    `SPD ${Math.round(stats.speed)}`,
+    `JMP ${Math.round(stats.jump)}`,
+    `DMG ${stats.keyboardDamage}`,
+    `CD ${stats.keyboardCooldown.toFixed(2)}s`,
+    `AIR ${stats.maxAirJumps}`,
+    `PRC ${pierce}`,
+  ];
+
+  if (!options.compact) {
+    parts.push(`GRACE ${stats.invincibleDuration.toFixed(1)}s`);
+  }
+  if (bounces > 0) {
+    parts.push(`BNC ${bounces}`);
+  }
+  if (returns > 0) {
+    parts.push(`RET ${returns}`);
+  }
+  if (getUpgradeCount("ticketVacuum") > 0) {
+    parts.push(`VAC ${getTicketVacuumRange()}px`);
+  }
+  if (getUpgradeCount("snapshotRollback") > 0) {
+    parts.push(`ROLL ${getUpgradeCount("snapshotRollback")}`);
+  }
+
+  return parts.join(" | ");
+}
+
+function buildUpgradePillHTML(entry) {
+  return `
+    <span class="build-upgrade-pill" data-rarity="${entry.rarity}">
+      <strong>${entry.name}</strong>
+      <span>x${entry.count}</span>
+    </span>
+  `;
 }
 
 const UPGRADE_POOL = [
@@ -1457,9 +1516,9 @@ const UPGRADE_POOL = [
     id: "overclockedThrow",
     name: "Overclocked Throw",
     rarity: "uncommon",
-    description: "Keyboards fly faster, but the throw cycle runs slightly hotter.",
+    description: "Keyboards fly faster, but the throw cycle takes slightly longer.",
     maxStacks: 4,
-    preview: () => `+${220 * (getUpgradeCount("overclockedThrow") + 1)} total throw speed, hotter cooldown`,
+    preview: () => `+${220 * (getUpgradeCount("overclockedThrow") + 1)} total throw speed, longer cooldown`,
     apply: () => { runUpgrades.overclockedThrow += 1; },
   },
   {
@@ -2125,6 +2184,7 @@ function buildSummaryStatHTML({ label, value, note }) {
 
 function renderGameOverSla() {
   const levelReached = currentLevel;
+  const pickedUpgrades = getPickedUpgradeEntries();
   const summaryCards = [
     { label: "Managers Escalated", value: runStats.bossesDefeated, note: "Bosses defeated" },
     { label: "VMs Restored", value: runStats.vmsRestored, note: "Tickets recovered across the run" },
@@ -2146,6 +2206,15 @@ function renderGameOverSla() {
       </div>
       <div class="summary-grid">
         ${summaryCards.map(buildSummaryStatHTML).join("")}
+      </div>
+    </section>
+    <section class="summary-section build-summary-section">
+      <div class="guide-section-header">
+        <h3>Final Build</h3>
+        <span>${getBuildStatsText()}</span>
+      </div>
+      <div class="build-upgrade-list">
+        ${pickedUpgrades.length ? pickedUpgrades.map(buildUpgradePillHTML).join("") : "<p>No upgrades deployed.</p>"}
       </div>
     </section>
   `;
@@ -2181,13 +2250,15 @@ function buildLevelConfig(level) {
     : roomTheme.backgroundImageBase || null;
 
   const tuning = getThemeTuning(roomTheme);
+  const isBossLevel = level % BOSS_LEVEL_INTERVAL === 0;
 
   return {
-    isBossLevel: level % BOSS_LEVEL_INTERVAL === 0,
+    isBossLevel,
     bossName,
     bossHp: Math.floor(tier * 3.0),
     bossSpeedScale: Math.min(1 + tier * 0.008, 1.85),
     bossAttackScale: Math.min(1 + tier * 0.009, 1.85),
+    slaEscalationRate: isBossLevel ? 0 : Math.min(1.9 + tier * 0.06, 3.2),
     ticketTarget: Math.min(BASE_TICKETS + Math.floor(tier * 0.35) + longRunBonus, 40),
     segments: Math.min(BASE_LEVEL_SEGMENTS + Math.floor(tier * 0.4) + longRunBonus, 48),
     maxGapWidth: Math.min(Math.round((BASE_GAP_WIDTH + Math.floor(tier * 2.3)) * tuning.gapMultiplier), 390),
@@ -2439,6 +2510,106 @@ function syncWorldSpriteColliders() {
     if (zone.kind === "backupWindow") {
       zone.baseX = supportPlatform.x;
     }
+  }
+}
+
+function getSlaPriorityLabel(tier = slaPriorityTier) {
+  if (tier >= 3) {
+    return "P1";
+  }
+  if (tier === 2) {
+    return "P2";
+  }
+  if (tier === 1) {
+    return "P3";
+  }
+  return "OK";
+}
+
+function getSlaPriorityTier(escalation = slaEscalation) {
+  if (escalation >= 100) {
+    return 3;
+  }
+  if (escalation >= 70) {
+    return 2;
+  }
+  if (escalation >= 35) {
+    return 1;
+  }
+  return 0;
+}
+
+function getSlaPressure() {
+  const tier = currentLevelConfig.isBossLevel ? 0 : slaPriorityTier;
+  const unattendedMultiplier = slaNoRestoreTimer > 9 ? 1.08 : 1;
+  return {
+    speedMultiplier: (1 + tier * 0.1) * unattendedMultiplier,
+    shootCooldownMultiplier: Math.max(0.62, 1 - tier * 0.12),
+    projectileSpeedMultiplier: 1 + tier * 0.08,
+  };
+}
+
+function getSlaDispatchInterval() {
+  if (slaPriorityTier >= 3) {
+    return 4.2;
+  }
+  if (slaPriorityTier === 2) {
+    return 6.1;
+  }
+  if (slaPriorityTier === 1) {
+    return 8.4;
+  }
+  return 0;
+}
+
+function stabilizeSlaEscalation(amount = 12) {
+  if (currentLevelConfig.isBossLevel) {
+    return;
+  }
+  slaEscalation = Math.max(0, slaEscalation - amount);
+  slaPriorityTier = getSlaPriorityTier();
+  slaNoRestoreTimer = 0;
+  slaDispatchTimer = Math.max(slaDispatchTimer, getSlaDispatchInterval() * 0.55);
+  slaStabilizedTimer = Math.max(slaStabilizedTimer, 1.1);
+  syncHud();
+}
+
+function updateSlaEscalation(dt) {
+  if (currentLevelConfig.isBossLevel || gameState !== "playing") {
+    return;
+  }
+
+  const objectiveDone = player.score >= currentLevelConfig.ticketTarget;
+  if (objectiveDone) {
+    slaNoRestoreTimer = 0;
+    slaStabilizedTimer = Math.max(slaStabilizedTimer - dt, 0);
+    return;
+  }
+
+  slaNoRestoreTimer += dt;
+  if (slaStabilizedTimer > 0) {
+    slaStabilizedTimer = Math.max(0, slaStabilizedTimer - dt);
+  } else {
+    const staleTicketMultiplier = slaNoRestoreTimer > 12 ? 2.25 : slaNoRestoreTimer > 7 ? 1.65 : 1;
+    slaEscalation = Math.min(100, slaEscalation + (currentLevelConfig.slaEscalationRate || 0) * staleTicketMultiplier * dt);
+  }
+
+  const nextTier = getSlaPriorityTier();
+  if (nextTier > slaPriorityTier) {
+    slaPriorityTier = nextTier;
+    addScreenShake(3 + slaPriorityTier, 0.1);
+    spawnSystemParticles(player.x + player.w / 2, player.y + player.h * 0.35, slaPriorityTier >= 3 ? "#ff5b6e" : "#ffd166", 10 + slaPriorityTier * 2, { speedMin: 80, speedMax: 230 });
+    syncHud();
+  } else {
+    slaPriorityTier = nextTier;
+  }
+
+  updateSlaDispatch(dt);
+
+  slaHudTimer = Math.max(0, slaHudTimer - dt);
+  if (slaHudTimer <= 0) {
+    slaHudTimer = 0.5;
+    syncHud();
   }
 }
 
@@ -2888,6 +3059,12 @@ function buildProceduralLevel() {
 function resetRun(preservedLives = null) {
   spriteVariantState = {};
   pendingLevelRestart = null;
+  slaEscalation = 0;
+  slaPriorityTier = 0;
+  slaStabilizedTimer = 0;
+  slaHudTimer = 0;
+  slaNoRestoreTimer = 0;
+  slaDispatchTimer = 0;
   buildProceduralLevel();
   player = makePlayer();
   if (preservedLives !== null) {
@@ -2924,12 +3101,11 @@ function startNextLevel() {
 
 function renderUpgradeOverlay() {
   const baseConfig = playerConfigs[selectedPlayerKey];
-  const currentStats = getPlayerStats();
   rollUpgradeChoices();
   const activeTraits = getBuildTraitNames();
 
   upgradeTitle.textContent = `Level ${currentLevel} cleared. Choose one upgrade for level ${currentLevel + 1}.`;
-  upgradeSummary.textContent = `${baseConfig.label} build: speed ${Math.round(currentStats.speed)} | jump ${Math.round(currentStats.jump)} | damage ${currentStats.keyboardDamage} | cooldown ${currentStats.keyboardCooldown.toFixed(2)}s | shield ${currentStats.invincibleDuration.toFixed(1)}s | lives ${player.lives}${activeTraits.length ? ` | traits: ${activeTraits.join(", ")}` : ""}`;
+  upgradeSummary.textContent = `${baseConfig.label} build: ${getBuildStatsText()} | LIVES ${player.lives}${activeTraits.length ? ` | traits: ${activeTraits.join(", ")}` : ""}`;
   upgradeGrid.innerHTML = currentUpgradeChoices.map((entry) => `
     <button class="upgrade-card" type="button" data-upgrade="${entry.id}" data-rarity="${entry.rarity}">
       <span class="upgrade-name">${entry.name}</span>
@@ -2969,7 +3145,6 @@ function updateBestRun() {
 hudBestRun.textContent = `${bestRunScore} / L${bestLevel}`;
 
 function syncHud() {
-  const currentStats = getPlayerStats();
   updateBestRun();
 
   if (currentLevelConfig.isBossLevel && boss) {
@@ -3005,10 +3180,15 @@ function syncHud() {
   if (player?.pressureResponseTimer > 0) {
     activeEffects.push(`Boss Tempo ${Math.ceil(player.pressureResponseTimer)}s`);
   }
+  if (!currentLevelConfig.isBossLevel && currentLevelConfig.slaEscalationRate > 0) {
+    const dispatchInterval = getSlaDispatchInterval();
+    const dispatchText = dispatchInterval > 0 && slaDispatchTimer > 0 ? ` Dispatch ${Math.ceil(slaDispatchTimer)}s` : "";
+    activeEffects.push(`SLA ${getSlaPriorityLabel()} ${Math.round(slaEscalation)}%${dispatchText}`);
+  }
   if (debugAutoAimEnabled) {
     activeEffects.push("Smart Assist TEST");
   }
-  hudStats.textContent = `SPD ${Math.round(currentStats.speed)} | JMP ${Math.round(currentStats.jump)} | DMG ${currentStats.keyboardDamage} | CD ${currentStats.keyboardCooldown.toFixed(2)}s`;
+  hudStats.textContent = getBuildStatsText({ compact: true });
   hudBuffs.textContent = activeEffects.length > 0 ? activeEffects.join(" | ") : "-";
 }
 
@@ -3595,6 +3775,106 @@ function ensureSupportEnemiesHaveEscorts(enemyScaling) {
   }
 }
 
+function getSlaDispatchVariants() {
+  const unlockedVariants = USER_VARIANTS.filter((variant) => currentLevel >= (variant.behavior?.unlockLevel || 1));
+  const allowedKinds = slaPriorityTier >= 3
+    ? ["spamCaller", "ticketSpammer", "escalationUser", "vip", "jumper", "walker"]
+    : slaPriorityTier === 2
+      ? ["spamCaller", "ticketSpammer", "escalationUser", "jumper", "walker"]
+      : ["spamCaller", "jumper", "walker"];
+  return unlockedVariants.filter((variant) => (
+    allowedKinds.includes(variant.kind) &&
+    !variantHasSupportBehavior(variant) &&
+    !variant.behavior?.popup?.enabled
+  ));
+}
+
+function getSlaDispatchPlatform(variant) {
+  const playerCenterX = player.x + player.w / 2;
+  const playerPlatform = getSupportingPlatform(player, 18);
+  const candidates = platforms.filter((platform) => {
+    if (isPlatformDisabled(platform) || platform.w < Math.max(250, variant.w + 150)) {
+      return false;
+    }
+    const platformBox = makeCollider(platform);
+    const visibleEnough = platformBox.x + platformBox.w >= cameraX - 40 && platformBox.x <= cameraX + canvas.width + 120;
+    const reachableBand = Math.abs(platformBox.y - player.y) < 260;
+    return visibleEnough && reachableBand;
+  });
+
+  if (playerPlatform && candidates.includes(playerPlatform)) {
+    const platformBox = makeCollider(playerPlatform);
+    const roomLeft = playerCenterX - platformBox.x;
+    const roomRight = platformBox.x + platformBox.w - playerCenterX;
+    if (Math.max(roomLeft, roomRight) > variant.w + 170) {
+      return playerPlatform;
+    }
+  }
+
+  return pickWeighted(candidates, (platform) => {
+    const platformCenter = platform.x + platform.w / 2;
+    const distance = Math.abs(platformCenter - playerCenterX);
+    const aheadBonus = platformCenter > playerCenterX ? 1.45 : 1;
+    return aheadBonus / Math.max(0.6, distance / 520);
+  });
+}
+
+function spawnSlaIncidentDispatch() {
+  if (slaPriorityTier <= 0 || currentLevelConfig.isBossLevel) {
+    return false;
+  }
+
+  const visibleActiveUsers = users.filter((user) => !user.defeated && isEntityOnScreen(user, 140)).length;
+  const maxVisibleUsers = 3 + slaPriorityTier * 2;
+  if (visibleActiveUsers >= maxVisibleUsers) {
+    return false;
+  }
+
+  const variants = getSlaDispatchVariants();
+  if (!variants.length) {
+    return false;
+  }
+
+  const themeTuning = getThemeTuning(currentLevelConfig.theme);
+  const variant = pickWeighted(variants, (entry) => getThemeWeightedEnemySpawnWeight(entry, themeTuning));
+  const platform = getSlaDispatchPlatform(variant);
+  if (!variant || !platform) {
+    return false;
+  }
+
+  const playerCenterX = player.x + player.w / 2;
+  const spawnOnRight = playerCenterX < platform.x + platform.w / 2;
+  const preferredX = spawnOnRight
+    ? platform.x + platform.w - variant.w - 26
+    : platform.x + 26;
+  const spawnX = Math.max(platform.x + 20, Math.min(preferredX, platform.x + platform.w - variant.w - 20));
+  const enemyScaling = getEnemyUpgradeScaling();
+  const user = spawnUserFromVariant(platform, variant, spawnX, enemyScaling, { dir: spawnOnRight ? -1 : 1 });
+  user.slaDispatch = true;
+  user.slaDispatchTimer = 1.0;
+  user.minX = Math.max(user.minX, platform.x + 12);
+  user.maxX = Math.min(user.maxX, platform.x + platform.w - user.w - 12);
+  spawnSystemParticles(user.x + user.w / 2, user.y + user.h * 0.55, slaPriorityTier >= 3 ? "#ff5b6e" : "#ffd166", 12 + slaPriorityTier * 3, { speedMin: 90, speedMax: 230 });
+  return true;
+}
+
+function updateSlaDispatch(dt) {
+  const interval = getSlaDispatchInterval();
+  if (interval <= 0 || slaStabilizedTimer > 0) {
+    slaDispatchTimer = interval;
+    return;
+  }
+
+  const urgencyMultiplier = slaNoRestoreTimer > 14 ? 0.72 : slaNoRestoreTimer > 9 ? 0.86 : 1;
+  slaDispatchTimer = Math.max(0, slaDispatchTimer - dt);
+  if (slaDispatchTimer > 0) {
+    return;
+  }
+
+  spawnSlaIncidentDispatch();
+  slaDispatchTimer = interval * urgencyMultiplier;
+}
+
 function resolvePlatforms(entity, axis, previousValue, options = {}) {
   const collision = { hit: false, side: null };
   if (axis === "y") {
@@ -4045,48 +4325,177 @@ function throwKeyboard() {
   player.throwPoseTimer = 0.18;
 }
 
+function getEntityCenter(entity) {
+  return {
+    x: entity.x + entity.w / 2,
+    y: entity.y + entity.h / 2,
+  };
+}
+
+function getBotEnemyTarget() {
+  if (boss && boss.hp > 0 && isEntityOnScreen(boss, 220)) {
+    return { entity: boss, kind: "boss", priority: 0 };
+  }
+
+  const playerCenter = getEntityCenter(player);
+  const candidates = users
+    .filter((user) => isUserActiveTarget(user) && isEntityOnScreen(user, 260))
+    .map((user) => {
+      const center = getEntityCenter(user);
+      const distance = Math.hypot(center.x - playerCenter.x, center.y - playerCenter.y);
+      const supportBonus = variantHasSupportBehavior(user) ? -180 : 0;
+      const blockingBonus = Math.abs(center.x - playerCenter.x) < 260 ? -120 : 0;
+      return { entity: user, kind: "enemy", priority: distance + supportBonus + blockingBonus };
+    })
+    .sort((a, b) => a.priority - b.priority);
+
+  return candidates[0] || null;
+}
+
+function getBotCollectibleTarget() {
+  const playerCenter = getEntityCenter(player);
+  const pickupCandidates = pickups
+    .filter((pickup) => !pickup.taken && isEntityOnScreen(pickup, 120))
+    .map((pickup) => {
+      const y = pickup.renderY ?? pickup.y;
+      const center = { x: pickup.x + pickup.w / 2, y: y + pickup.h / 2 };
+      const distance = Math.hypot(center.x - playerCenter.x, center.y - playerCenter.y);
+      return { entity: { ...pickup, y }, kind: "pickup", priority: distance - 220 };
+    });
+
+  const ticketCandidates = tickets
+    .filter((ticket) => !ticket.taken)
+    .map((ticket) => {
+      const y = ticket.renderY ?? ticket.y;
+      const center = { x: ticket.x + ticket.w / 2, y: y + ticket.h / 2 };
+      const distance = Math.hypot(center.x - playerCenter.x, center.y - playerCenter.y);
+      const behindPenalty = center.x < playerCenter.x - 80 ? 280 : 0;
+      return { entity: { ...ticket, y }, kind: "ticket", priority: distance + behindPenalty };
+    })
+    .sort((a, b) => a.priority - b.priority);
+
+  return [...pickupCandidates, ...ticketCandidates].sort((a, b) => a.priority - b.priority)[0] || null;
+}
+
+function getBotObjectiveTarget() {
+  const enemyTarget = getBotEnemyTarget();
+  if (enemyTarget && (enemyTarget.kind === "boss" || Math.abs(getEntityCenter(enemyTarget.entity).x - getEntityCenter(player).x) < 360)) {
+    return enemyTarget;
+  }
+
+  const objectiveDone = currentLevelConfig.isBossLevel ? boss && boss.hp <= 0 : player.score >= currentLevelConfig.ticketTarget;
+  if (objectiveDone) {
+    return { entity: finishGate, kind: "exit", priority: 0 };
+  }
+
+  return getBotCollectibleTarget() || enemyTarget || { entity: finishGate, kind: "forward", priority: 0 };
+}
+
+function isBotHazardAhead(dir) {
+  const box = makeCollider(player);
+  const now = performance.now();
+  const probe = {
+    x: dir > 0 ? box.x + box.w - 2 : box.x - 54,
+    y: box.y + 10,
+    w: 56,
+    h: box.h + 34,
+  };
+
+  if (firewallZones.some((zone) => rectsOverlap(probe, zone))) {
+    return true;
+  }
+
+  return specialHazards.some((zone) => {
+    if (zone.kind === "dataLeak" || zone.kind === "vent") {
+      return false;
+    }
+    if (zone.kind === "static" && !isStaticHazardActive(zone, now)) {
+      return false;
+    }
+    if (zone.kind === "diskFailure" && !isDiskFailureHazardActive(zone, now)) {
+      return false;
+    }
+    if (zone.kind === "reboot" && !isRebootHazardBurstActive(zone, now)) {
+      return false;
+    }
+    return rectsOverlap(probe, getSpecialHazardRect(zone, now));
+  });
+}
+
+function maybeBotThrowAt(targetInfo) {
+  if (!targetInfo || (targetInfo.kind !== "enemy" && targetInfo.kind !== "boss") || debugBotState.throwCooldown > 0) {
+    return;
+  }
+
+  const targetCenter = getEntityCenter(targetInfo.entity);
+  const playerCenter = getEntityCenter(player);
+  const dx = targetCenter.x - playerCenter.x;
+  const dy = targetCenter.y - playerCenter.y;
+  const rangeX = targetInfo.kind === "boss" ? 560 : 390;
+  if (Math.abs(dx) <= rangeX && Math.abs(dy) <= 210) {
+    player.facing = dx >= 0 ? 1 : -1;
+    throwKeyboard();
+    debugBotState.throwCooldown = targetInfo.kind === "boss" ? 0.24 : 0.32;
+  }
+}
+
+function maybeBotJump(direction, targetInfo, desiredDx) {
+  if (debugBotState.jumpCooldown > 0) {
+    return;
+  }
+
+  const targetCenter = targetInfo ? getEntityCenter(targetInfo.entity) : null;
+  const playerCenter = getEntityCenter(player);
+  const targetIsAbove = targetCenter && targetCenter.y < playerCenter.y - 52 && Math.abs(desiredDx) < 260;
+  const needsGapJump = direction !== 0 && (!hasGroundAhead(player, direction, 36, 50) || willTouchFirewall(player, direction, 24) || isBotHazardAhead(direction));
+  const isStuck = debugBotState.stuckTimer > 0.45;
+
+  if (player.grounded && (targetIsAbove || needsGapJump || isStuck)) {
+    jumpQueued = true;
+    debugBotState.jumpCooldown = isStuck ? 0.32 : 0.42;
+  } else if (!player.grounded && player.airJumpsRemaining > 0 && player.vy > 140 && (needsGapJump || targetIsAbove)) {
+    jumpQueued = true;
+    debugBotState.jumpCooldown = 0.55;
+  }
+}
+
+function getDebugBotIntent(dt) {
+  debugBotState.jumpCooldown = Math.max(0, debugBotState.jumpCooldown - dt);
+  debugBotState.throwCooldown = Math.max(0, debugBotState.throwCooldown - dt);
+  debugBotState.stuckTimer = Math.abs(player.x - debugBotState.lastX) < 1 && player.grounded
+    ? debugBotState.stuckTimer + dt
+    : 0;
+  debugBotState.lastX = player.x;
+
+  const targetInfo = getBotObjectiveTarget();
+  maybeBotThrowAt(targetInfo);
+
+  const targetCenter = targetInfo ? getEntityCenter(targetInfo.entity) : { x: player.x + 220, y: player.y };
+  const playerCenter = getEntityCenter(player);
+  const desiredDx = targetCenter.x - playerCenter.x;
+  let direction = Math.abs(desiredDx) < 18 && targetInfo?.kind !== "boss" ? 0 : Math.sign(desiredDx || debugBotState.direction || 1);
+
+  if (player.x < 24) {
+    direction = 1;
+  } else if (player.x + player.w > worldWidth - 24) {
+    direction = -1;
+  } else if (debugBotState.stuckTimer > 0.9) {
+    direction = -(debugBotState.direction || 1);
+    debugBotState.stuckTimer = 0.2;
+  }
+
+  maybeBotJump(direction, targetInfo, desiredDx);
+  debugBotState.direction = direction || debugBotState.direction || 1;
+
+  return {
+    moveLeft: direction < 0,
+    moveRight: direction > 0,
+  };
+}
+
 function getPlayerIntent(dt) {
   if (debugBotEnabled && gameState === "playing" && player) {
-    debugBotState.jumpCooldown = Math.max(0, debugBotState.jumpCooldown - dt);
-    debugBotState.throwCooldown = Math.max(0, debugBotState.throwCooldown - dt);
-
-    let direction = debugBotState.direction;
-    const target = boss && boss.hp > 0
-      ? boss
-      : users.find((user) => isUserActiveTarget(user) && Math.abs(user.x - player.x) < 280);
-
-    if (target) {
-      direction = target.x + target.w / 2 >= player.x + player.w / 2 ? 1 : -1;
-      if (debugBotState.throwCooldown <= 0 && Math.abs((target.x + target.w / 2) - (player.x + player.w / 2)) < 260) {
-        player.facing = direction;
-        throwKeyboard();
-        debugBotState.throwCooldown = 0.4;
-      }
-    }
-
-    if (player.x < 24) {
-      direction = 1;
-    } else if (player.x + player.w > worldWidth - 24) {
-      direction = -1;
-    }
-
-    if (player.grounded) {
-      if (!hasGroundAhead(player, direction, 30, 38) || willTouchFirewall(player, direction, 22)) {
-        if (debugBotState.jumpCooldown <= 0) {
-          jumpQueued = true;
-          debugBotState.jumpCooldown = 0.4;
-        }
-      }
-    } else if (debugBotState.jumpCooldown <= 0 && player.airJumpsRemaining > 0 && player.vy > 120) {
-      jumpQueued = true;
-      debugBotState.jumpCooldown = 0.55;
-    }
-
-    debugBotState.direction = direction;
-    return {
-      moveLeft: direction < 0,
-      moveRight: direction > 0,
-    };
+    return getDebugBotIntent(dt);
   }
 
   return {
@@ -4197,6 +4606,7 @@ function resetUserBehaviorTimers(user) {
   const burstBehavior = getUserBurstBehavior(user);
   if (burstBehavior.enabled) {
     user.burstTimer = 0;
+    user.burstWindupTimer = 0;
     user.burstCooldown = randomBetween(burstBehavior.cooldownMin || 1.4, burstBehavior.cooldownMax || 2.7);
   }
   const denialBehavior = getUserDenialBehavior(user);
@@ -4417,6 +4827,7 @@ function updatePopupUser(user, popupBehavior, dt) {
 
 function updateUsers(dt) {
   const now = performance.now();
+  const slaPressure = getSlaPressure();
   updateUserDenialZones(dt);
 
   for (const user of users) {
@@ -4457,12 +4868,22 @@ function updateUsers(dt) {
     }
 
     if (burstBehavior.enabled) {
-      user.burstCooldown = Math.max(0, (user.burstCooldown || 0) - dt);
-      user.burstTimer = Math.max(0, (user.burstTimer || 0) - dt);
-      if (user.burstCooldown <= 0) {
-        user.burstTimer = burstBehavior.duration || 0.52;
-        user.burstCooldown = randomBetween(burstBehavior.cooldownMin || 1.4, burstBehavior.cooldownMax || 2.7);
+      if (user.burstTimer > 0) {
+        user.burstTimer = Math.max(0, user.burstTimer - dt);
+      } else if (user.burstWindupTimer > 0) {
+        user.burstWindupTimer = Math.max(0, user.burstWindupTimer - dt);
         user.dir = player.x + player.w / 2 < user.x + user.w / 2 ? -1 : 1;
+        if (user.burstWindupTimer <= 0) {
+          user.burstTimer = burstBehavior.duration || 0.52;
+          user.burstCooldown = randomBetween(burstBehavior.cooldownMin || 1.4, burstBehavior.cooldownMax || 2.7);
+          spawnImpactParticles(user.x + user.w / 2, user.y + user.h * 0.72, user.tint || "#ff8b5b", 6, { speedMin: 70, speedMax: 170, gravity: 520 });
+        }
+      } else {
+        user.burstCooldown = Math.max(0, (user.burstCooldown || 0) - dt);
+        if (user.burstCooldown <= 0) {
+          user.burstWindupTimer = burstBehavior.windup || 0.24;
+          user.dir = player.x + player.w / 2 < user.x + user.w / 2 ? -1 : 1;
+        }
       }
     }
 
@@ -4517,8 +4938,9 @@ function updateUsers(dt) {
       ? 1 + (user.escalationStacks || 0) * (escalationBehavior.speedPerStack || 0.18)
       : 1;
     const burstSpeedMultiplier = burstBehavior.enabled && user.burstTimer > 0 ? burstBehavior.speedMultiplier || 2.25 : 1;
+    const burstWindupMultiplier = burstBehavior.enabled && user.burstWindupTimer > 0 ? burstBehavior.windupSpeedMultiplier || 0.25 : 1;
     const holdBackMultiplier = denialBehavior.enabled && Math.abs((player.x + player.w / 2) - (user.x + user.w / 2)) < 380 ? 0.55 : 1;
-    let desiredVx = user.dir * (user.baseSpeed || user.speed) * supportInfluence.speedMultiplier * escalationSpeedMultiplier * burstSpeedMultiplier * holdBackMultiplier * (user.snareTimer > 0 ? 0.58 : 1);
+    let desiredVx = user.dir * (user.baseSpeed || user.speed) * slaPressure.speedMultiplier * supportInfluence.speedMultiplier * escalationSpeedMultiplier * burstSpeedMultiplier * burstWindupMultiplier * holdBackMultiplier * (user.snareTimer > 0 ? 0.58 : 1);
     if (user.slipTimer > 0) {
       const accel = user.grounded ? 1250 : 760;
       const decel = user.grounded ? 480 : 320;
@@ -4580,7 +5002,7 @@ function updateUsers(dt) {
     ) {
       fireUserRangedAttack(user, rangedBehavior);
       const supportShotMultiplier = getUserSupportInfluence(user).shootCooldownMultiplier;
-      user.shootTimer = randomBetween(rangedBehavior.cooldownMin || 1.4, rangedBehavior.cooldownMax || 2.6) * (user.shootCooldownMultiplier || 1) * supportShotMultiplier;
+      user.shootTimer = randomBetween(rangedBehavior.cooldownMin || 1.4, rangedBehavior.cooldownMax || 2.6) * (user.shootCooldownMultiplier || 1) * supportShotMultiplier * slaPressure.shootCooldownMultiplier;
     }
 
     if (rectsOverlap(player, user)) {
@@ -4597,7 +5019,7 @@ function createUserProjectile(user, rangedBehavior, dir, overrides = {}) {
     y: user.y + (rangedBehavior.originY || 24),
     w: rangedBehavior.projectileW || 36,
     h: rangedBehavior.projectileH || 22,
-    vx: overrides.vx ?? dir * randomInt(rangedBehavior.projectileSpeedMin || 340, rangedBehavior.projectileSpeedMax || 440) * (user.projectileSpeedMultiplier || 1),
+    vx: overrides.vx ?? dir * randomInt(rangedBehavior.projectileSpeedMin || 340, rangedBehavior.projectileSpeedMax || 440) * (user.projectileSpeedMultiplier || 1) * getSlaPressure().projectileSpeedMultiplier,
     vy: overrides.vy ?? randomInt(rangedBehavior.projectileVyMin || -180, rangedBehavior.projectileVyMax || -80),
     gravity: overrides.gravity ?? rangedBehavior.projectileGravity ?? 820,
     color: rangedBehavior.projectileColor || "#7cf7ff",
@@ -4609,6 +5031,7 @@ function createUserProjectile(user, rangedBehavior, dir, overrides = {}) {
 
 function fireUserRangedAttack(user, rangedBehavior) {
   const dir = player.x < user.x ? -1 : 1;
+  const slaProjectilePressure = getSlaPressure().projectileSpeedMultiplier;
   user.dir = dir;
   user.attackPoseTimer = rangedBehavior.attackPoseTime || 0.24;
 
@@ -4617,7 +5040,7 @@ function fireUserRangedAttack(user, rangedBehavior) {
     const spread = rangedBehavior.burstSpread || 0.16;
     for (let index = 0; index < count; index += 1) {
       const offset = index - (count - 1) / 2;
-      const speed = randomInt(rangedBehavior.projectileSpeedMin || 220, rangedBehavior.projectileSpeedMax || 310) * (1 + offset * spread) * (user.projectileSpeedMultiplier || 1);
+      const speed = randomInt(rangedBehavior.projectileSpeedMin || 220, rangedBehavior.projectileSpeedMax || 310) * (1 + offset * spread) * (user.projectileSpeedMultiplier || 1) * slaProjectilePressure;
       const vy = randomInt(rangedBehavior.projectileVyMin || -230, rangedBehavior.projectileVyMax || -80) + offset * 42;
       userProjectiles.push(createUserProjectile(user, rangedBehavior, dir, { vx: dir * speed, vy }));
     }
@@ -4629,7 +5052,7 @@ function fireUserRangedAttack(user, rangedBehavior) {
     const originY = user.y + (rangedBehavior.originY || 24);
     const targetX = player.x + player.w / 2;
     const targetY = player.y + player.h * 0.45;
-    const speed = randomInt(rangedBehavior.projectileSpeedMin || 520, rangedBehavior.projectileSpeedMax || 640) * (user.projectileSpeedMultiplier || 1);
+    const speed = randomInt(rangedBehavior.projectileSpeedMin || 520, rangedBehavior.projectileSpeedMax || 640) * (user.projectileSpeedMultiplier || 1) * slaProjectilePressure;
     const vx = dir * speed;
     const travelTime = Math.max(0.18, Math.abs(targetX - originX) / Math.max(1, Math.abs(vx)));
     const gravity = rangedBehavior.projectileGravity || 160;
@@ -5766,6 +6189,7 @@ function updateTickets(time) {
       player.score += 1;
       runScore += 1;
       runStats.vmsRestored += 1;
+      stabilizeSlaEscalation(18);
       const bonusRecoveryCount = getUpgradeCount("bonusRecovery");
       if (bonusRecoveryCount > 0) {
         traitState.bonusRecoveryTickets += 1;
@@ -6314,9 +6738,15 @@ function drawUsers() {
         ctx.restore();
       }
     }
-    if (!user.defeated && user.burstTimer > 0) {
-      ctx.fillStyle = "#ff8b5b";
+    if (!user.defeated && (user.burstWindupTimer > 0 || user.burstTimer > 0)) {
+      ctx.fillStyle = user.burstTimer > 0 ? "#ff8b5b" : "#ffd166";
       drawRoundRect(-18, -user.h / 2 - 16, 36, 5, 3);
+      if (user.burstWindupTimer > 0) {
+        ctx.fillStyle = "#08111f";
+        ctx.font = "800 7px Inter, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("CALL", 0, -user.h / 2 - 11);
+      }
     }
     if (!user.defeated && (user.escalationStacks || 0) > 0) {
       ctx.fillStyle = "#ff5b6e";
@@ -6852,6 +7282,7 @@ function gameLoop(now) {
 
   if (gameState === "playing") {
     updatePlayer(dt);
+    updateSlaEscalation(dt);
     updateUsers(dt);
     updateUserProjectiles(dt);
     updateBoss(dt);
@@ -7028,6 +7459,8 @@ window.addEventListener("keydown", (event) => {
     jumpQueued = false;
     debugBotState.jumpCooldown = 0;
     debugBotState.throwCooldown = 0;
+    debugBotState.stuckTimer = 0;
+    debugBotState.lastX = player?.x || 0;
     return;
   }
   if ((event.key === "p" || event.key === "P" || event.key === "Escape") && !event.repeat) {
@@ -7108,3 +7541,4 @@ preloadAssets()
     console.error(error);
     showMessage("Asset Load Failed", `Startup failed: ${error.message}. If you opened the game as a local file, try a local web server and refresh.`);
   });
+
