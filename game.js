@@ -620,7 +620,7 @@ const USER_VARIANTS = [
       },
       escalation: {
         enabled: true,
-        interval: 5.2,
+        interval: 4.0,
         maxStacks: 3,
         hpPerStack: 1,
         speedPerStack: 0.18,
@@ -4227,14 +4227,14 @@ function updateUsers(dt) {
       }
     }
 
-    if (escalationBehavior.enabled && (user.escalationStacks || 0) < (escalationBehavior.maxStacks || 3)) {
-      user.escalationTimer = Math.max(0, (user.escalationTimer || escalationBehavior.interval || 5.2) - dt);
+    if (escalationBehavior.enabled && (user.escalationStacks || 0) < (escalationBehavior.maxStacks || 3) && isEntityOnScreen(user, 0)) {
+      user.escalationTimer = Math.max(0, (user.escalationTimer || escalationBehavior.interval || 4.0) - dt);
       if (user.escalationTimer <= 0) {
         user.escalationStacks = (user.escalationStacks || 0) + 1;
         user.maxHp += escalationBehavior.hpPerStack || 1;
         user.hp += escalationBehavior.hpPerStack || 1;
         user.hurtTimer = Math.max(user.hurtTimer || 0, 0.18);
-        user.escalationTimer = escalationBehavior.interval || 5.2;
+        user.escalationTimer = escalationBehavior.interval || 4.0;
         spawnImpactParticles(user.x + user.w / 2, user.y + user.h * 0.45, "#ff5b6e", 7, { speedMin: 80, speedMax: 180 });
       }
     }
@@ -6025,7 +6025,7 @@ function drawUsers() {
       ctx.fillStyle = "#ff5b6e";
       ctx.font = "800 10px Inter, sans-serif";
       ctx.textAlign = "center";
-      ctx.fillText(`P${user.escalationStacks}`, 0, -user.h / 2 - 12);
+      ctx.fillText(`PRIO ${Math.max(1, 4 - user.escalationStacks)}`, 0, -user.h / 2 - 12);
     }
     if (!user.defeated && popupBehavior.enabled && user.popupState === "warning") {
       ctx.fillStyle = "#ffffff";
