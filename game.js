@@ -1,5 +1,6 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
+const stageWrap = document.querySelector(".stage-wrap");
 const selectOverlay = document.getElementById("selectOverlay");
 const messageOverlay = document.getElementById("messageOverlay");
 const messageCard = messageOverlay.querySelector(".message-card");
@@ -1134,6 +1135,8 @@ let debugBotState = {
 };
 let pendingLevelRestart = null;
 let nextHazardId = 1;
+let assetsReady = false;
+let pendingCampaignStart = false;
 
 function createRunStats() {
   return {
@@ -2067,7 +2070,7 @@ function buildLevelConfig(level) {
   const backgroundImages = roomTheme.backgroundImageBase ? getLoadedBackgroundVariants(roomTheme.backgroundImageBase) : [];
   const backgroundImage = backgroundImages.length > 0
     ? backgroundImages[tier % backgroundImages.length]
-    : null;
+    : roomTheme.backgroundImageBase || null;
 
   return {
     isBossLevel: level % BOSS_LEVEL_INTERVAL === 0,
@@ -6584,6 +6587,40 @@ function loadImage(src) {
     image.src = `${src}${cacheSeparator}v=${ASSET_CACHE_VERSION}`;
   });
 }
+function cacheLoadedAsset(key, image) {
+  assets[key] = image;
+  assetOpaqueBounds[key] = measureOpaqueBounds(image);
+}
+
+function isOptionalStartupAsset(key) {
+  return key.includes("Var");
+}
+
+function loadOptionalAssets(entries) {
+  entries.forEach(async ([key, src]) => {
+    try {
+      cacheLoadedAsset(key, await loadImage(src));
+    } catch (_error) {
+      console.warn(`Optional asset skipped: ${src}`);
+    }
+  });
+}
+
+function fitGameCanvasToStage() {
+  if (!stageWrap) {
+    return;
+  }
+
+  const availableW = stageWrap.clientWidth;
+  const availableH = stageWrap.clientHeight;
+  if (availableW <= 0 || availableH <= 0) {
+    return;
+  }
+
+  const scale = Math.min(availableW / canvas.width, availableH / canvas.height);
+  canvas.style.width = `${Math.floor(canvas.width * scale)}px`;
+  canvas.style.height = `${Math.floor(canvas.height * scale)}px`;
+}
 
 async function preloadAssets() {
   const entries = [
@@ -6591,27 +6628,16 @@ async function preloadAssets() {
     ["gertjan", playerConfigs.gertjan.sprite],
     ...Object.entries(staticSprites),
   ];
+  const requiredEntries = entries.filter(([key]) => !isOptionalStartupAsset(key));
+  const optionalEntries = entries.filter(([key]) => isOptionalStartupAsset(key));
 
-  const loaded = await Promise.all(entries.map(async ([key, src]) => {
-    try {
-      return [key, await loadImage(src)];
-    } catch (error) {
-      if (OPTIONAL_SPRITE_KEYS.has(key) || (key.startsWith("bg") && key.includes("Var"))) {
-        console.warn(`Optional asset skipped: ${src}`);
-        return null;
-      }
-      throw error;
-    }
-  }));
+  const loaded = await Promise.all(requiredEntries.map(async ([key, src]) => [key, await loadImage(src)]));
 
-  for (const entry of loaded) {
-    if (!entry) {
-      continue;
-    }
-    const [key, image] = entry;
-    assets[key] = image;
-    assetOpaqueBounds[key] = measureOpaqueBounds(image);
+  for (const [key, image] of loaded) {
+    cacheLoadedAsset(key, image);
   }
+
+  loadOptionalAssets(optionalEntries);
 
   console.info("Enemy archetype sprites", {
     auditor: !!assets.auditorUser,
@@ -6628,6 +6654,11 @@ canvas.style.cursor = "default";
 document.querySelectorAll(".character-card").forEach((button) => {
   button.addEventListener("click", () => {
     selectedPlayerKey = button.dataset.player;
+    if (!assetsReady) {
+      pendingCampaignStart = true;
+      showMessage("Loading Assets", "Preparing the first maintenance window...");
+      return;
+    }
     startCampaign();
   });
 });
@@ -6726,10 +6757,21 @@ window.addEventListener("blur", () => {
   keys.clear();
 });
 
+window.addEventListener("resize", fitGameCanvasToStage);
+if (window.ResizeObserver && stageWrap) {
+  new ResizeObserver(fitGameCanvasToStage).observe(stageWrap);
+}
+
 preloadAssets()
   .then(() => {
+    assetsReady = true;
+    fitGameCanvasToStage();
     lastTime = performance.now();
     requestAnimationFrame(gameLoop);
+    if (pendingCampaignStart) {
+      pendingCampaignStart = false;
+      startCampaign();
+    }
   })
   .catch((error) => {
     console.error(error);
