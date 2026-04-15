@@ -498,21 +498,22 @@ const USER_VARIANTS = [
         enabled: true,
         engageDistanceX: 680,
         engageDistanceY: 180,
-        projectileW: 36,
-        projectileH: 22,
-        projectileSpeedMin: 340,
-        projectileSpeedMax: 440,
-        projectileVyMin: -180,
-        projectileVyMax: -80,
-        projectileGravity: 820,
+        pattern: "aimed",
+        projectileW: 42,
+        projectileH: 20,
+        projectileSpeedMin: 520,
+        projectileSpeedMax: 640,
+        projectileVyMin: -80,
+        projectileVyMax: 80,
+        projectileGravity: 160,
         projectileColor: "#7cf7ff",
         projectileLabel: "EMAIL",
-        projectileHitbox: { left: 5, right: 5, top: 4, bottom: 4 },
-        originOffsetX: 10,
+        projectileHitbox: { left: 7, right: 7, top: 4, bottom: 4 },
+        originOffsetX: 12,
         originY: 24,
-        attackPoseTime: 0.24,
-        cooldownMin: 1.4,
-        cooldownMax: 2.6,
+        attackPoseTime: 0.34,
+        cooldownMin: 1.8,
+        cooldownMax: 3.0,
       },
     },
   },
@@ -650,21 +651,25 @@ const USER_VARIANTS = [
         enabled: true,
         engageDistanceX: 720,
         engageDistanceY: 220,
-        projectileW: 30,
-        projectileH: 18,
-        projectileSpeedMin: 300,
-        projectileSpeedMax: 380,
-        projectileVyMin: -125,
-        projectileVyMax: -45,
-        projectileGravity: 760,
+        pattern: "ticketBurst",
+        projectileW: 26,
+        projectileH: 16,
+        projectileSpeedMin: 220,
+        projectileSpeedMax: 310,
+        projectileVyMin: -230,
+        projectileVyMax: -80,
+        projectileGravity: 920,
         projectileColor: "#74f7c4",
         projectileLabel: "TKT",
-        projectileHitbox: { left: 4, right: 4, top: 3, bottom: 3 },
+        projectileHitbox: { left: 5, right: 5, top: 4, bottom: 4 },
         originOffsetX: 10,
         originY: 25,
-        attackPoseTime: 0.16,
-        cooldownMin: 0.58,
-        cooldownMax: 1.05,
+        attackPoseTime: 0.22,
+        cooldownMin: 1.05,
+        cooldownMax: 1.65,
+        burstCount: 3,
+        burstSpread: 0.18,
+        hitEffect: "snare",
       },
     },
   },
@@ -739,7 +744,7 @@ const ENEMY_GUIDE_TEXT = {
   },
   emailer: {
     title: "Email User",
-    description: "Ranged nuisance. Stops to fire email projectiles when you stay in line of sight.",
+    description: "Ranged nuisance. Pauses to send deliberate email shots that punish predictable movement.",
   },
   changeManager: {
     title: "Change Manager",
@@ -755,7 +760,7 @@ const ENEMY_GUIDE_TEXT = {
   },
   ticketSpammer: {
     title: "Ticket Spammer",
-    description: "Low-damage pressure. Fires frequent lightweight tickets that make simple jumps and dodges messier.",
+    description: "Low-threat pressure. Bursts arcing tickets that briefly snag movement instead of hitting like emails.",
   },
   vip: {
     title: "VIP User",
@@ -4339,21 +4344,7 @@ function updateUsers(dt) {
       Math.abs(player.x - user.x) < (rangedBehavior.engageDistanceX || 680) &&
       Math.abs(player.y - user.y) < (rangedBehavior.engageDistanceY || 180)
     ) {
-      const dir = player.x < user.x ? -1 : 1;
-      user.dir = dir;
-      user.attackPoseTimer = rangedBehavior.attackPoseTime || 0.24;
-      userProjectiles.push({
-        x: user.x + user.w / 2 + dir * (rangedBehavior.originOffsetX || 10),
-        y: user.y + (rangedBehavior.originY || 24),
-        w: rangedBehavior.projectileW || 36,
-        h: rangedBehavior.projectileH || 22,
-        vx: dir * randomInt(rangedBehavior.projectileSpeedMin || 340, rangedBehavior.projectileSpeedMax || 440) * (user.projectileSpeedMultiplier || 1),
-        vy: randomInt(rangedBehavior.projectileVyMin || -180, rangedBehavior.projectileVyMax || -80),
-        gravity: rangedBehavior.projectileGravity || 820,
-        color: rangedBehavior.projectileColor || "#7cf7ff",
-        label: rangedBehavior.projectileLabel || "EMAIL",
-        hitbox: rangedBehavior.projectileHitbox || { left: 5, right: 5, top: 4, bottom: 4 },
-      });
+      fireUserRangedAttack(user, rangedBehavior);
       const supportShotMultiplier = getUserSupportInfluence(user).shootCooldownMultiplier;
       user.shootTimer = randomBetween(rangedBehavior.cooldownMin || 1.4, rangedBehavior.cooldownMax || 2.6) * (user.shootCooldownMultiplier || 1) * supportShotMultiplier;
     }
@@ -4364,6 +4355,57 @@ function updateUsers(dt) {
   }
 
   users = users.filter((user) => !user.defeated || (user.deathTimer > 0 && user.y < canvas.height + 220));
+}
+
+function createUserProjectile(user, rangedBehavior, dir, overrides = {}) {
+  return {
+    x: user.x + user.w / 2 + dir * (rangedBehavior.originOffsetX || 10),
+    y: user.y + (rangedBehavior.originY || 24),
+    w: rangedBehavior.projectileW || 36,
+    h: rangedBehavior.projectileH || 22,
+    vx: overrides.vx ?? dir * randomInt(rangedBehavior.projectileSpeedMin || 340, rangedBehavior.projectileSpeedMax || 440) * (user.projectileSpeedMultiplier || 1),
+    vy: overrides.vy ?? randomInt(rangedBehavior.projectileVyMin || -180, rangedBehavior.projectileVyMax || -80),
+    gravity: overrides.gravity ?? rangedBehavior.projectileGravity ?? 820,
+    color: rangedBehavior.projectileColor || "#7cf7ff",
+    label: rangedBehavior.projectileLabel || "EMAIL",
+    hitbox: rangedBehavior.projectileHitbox || { left: 5, right: 5, top: 4, bottom: 4 },
+    hitEffect: rangedBehavior.hitEffect || null,
+  };
+}
+
+function fireUserRangedAttack(user, rangedBehavior) {
+  const dir = player.x < user.x ? -1 : 1;
+  user.dir = dir;
+  user.attackPoseTimer = rangedBehavior.attackPoseTime || 0.24;
+
+  if (rangedBehavior.pattern === "ticketBurst") {
+    const count = rangedBehavior.burstCount || 3;
+    const spread = rangedBehavior.burstSpread || 0.16;
+    for (let index = 0; index < count; index += 1) {
+      const offset = index - (count - 1) / 2;
+      const speed = randomInt(rangedBehavior.projectileSpeedMin || 220, rangedBehavior.projectileSpeedMax || 310) * (1 + offset * spread) * (user.projectileSpeedMultiplier || 1);
+      const vy = randomInt(rangedBehavior.projectileVyMin || -230, rangedBehavior.projectileVyMax || -80) + offset * 42;
+      userProjectiles.push(createUserProjectile(user, rangedBehavior, dir, { vx: dir * speed, vy }));
+    }
+    return;
+  }
+
+  if (rangedBehavior.pattern === "aimed") {
+    const originX = user.x + user.w / 2 + dir * (rangedBehavior.originOffsetX || 10);
+    const originY = user.y + (rangedBehavior.originY || 24);
+    const targetX = player.x + player.w / 2;
+    const targetY = player.y + player.h * 0.45;
+    const speed = randomInt(rangedBehavior.projectileSpeedMin || 520, rangedBehavior.projectileSpeedMax || 640) * (user.projectileSpeedMultiplier || 1);
+    const vx = dir * speed;
+    const travelTime = Math.max(0.18, Math.abs(targetX - originX) / Math.max(1, Math.abs(vx)));
+    const gravity = rangedBehavior.projectileGravity || 160;
+    const aimedVy = (targetY - originY - 0.5 * gravity * travelTime * travelTime) / travelTime;
+    const vy = Math.max(rangedBehavior.projectileVyMin ?? -220, Math.min(rangedBehavior.projectileVyMax ?? 160, aimedVy));
+    userProjectiles.push(createUserProjectile(user, rangedBehavior, dir, { vx, vy, gravity }));
+    return;
+  }
+
+  userProjectiles.push(createUserProjectile(user, rangedBehavior, dir));
 }
 
 function updateUserProjectiles(dt) {
@@ -4386,7 +4428,13 @@ function updateUserProjectiles(dt) {
 
     if (!projectile.expired && rectsOverlap(player, projectile)) {
       projectile.expired = true;
-      damagePlayer({ source: "enemyProjectile" });
+      if (projectile.hitEffect === "snare") {
+        player.snareTimer = Math.max(player.snareTimer, hasUpgrade("momentumCache") ? 0.1 : 0.2);
+        player.jumpDebuffTimer = Math.max(player.jumpDebuffTimer, 0.12);
+        spawnImpactParticles(player.x + player.w / 2, player.y + player.h * 0.45, projectile.color, 5, { speedMin: 70, speedMax: 150 });
+      } else {
+        damagePlayer({ source: "enemyProjectile" });
+      }
     }
   }
 
