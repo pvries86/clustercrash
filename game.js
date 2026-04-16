@@ -2943,6 +2943,7 @@ function makePlayer() {
     x: levelStartSpawn.x,
     prevX: levelStartSpawn.x,
     y: levelStartSpawn.y,
+    prevY: levelStartSpawn.y,
     vx: 0,
     vy: 0,
     w: config.width,
@@ -3651,6 +3652,66 @@ function damageUserFromHazard(user, zone, options = {}) {
       deathTimer: 0.4,
       deathVy: options.deathVy ?? -randomBetween(150, 240),
       deathVx: options.deathVx ?? randomBetween(-50, 50),
+    });
+  }
+}
+
+
+function getHorizontalOverlap(a, b) {
+  const aBox = makeCollider(a);
+  const bBox = makeCollider(b);
+  return Math.max(0, Math.min(aBox.x + aBox.w, bBox.x + bBox.w) - Math.max(aBox.x, bBox.x));
+}
+
+function getUserStompDamage(user) {
+  const supportInfluence = getUserSupportInfluence(user);
+  const effectiveArmor = Math.max(0, Math.floor(((user.armor || 0) + supportInfluence.armorBonus) * 0.5));
+  let damage = Math.max(1, 2 - effectiveArmor);
+  if (user.maxDamagePerHit) {
+    damage = Math.min(damage, user.maxDamagePerHit);
+  }
+  return damage;
+}
+
+function canPlayerStompUser(user) {
+  if (!isUserActiveTarget(user) || user.stompCooldown > 0) {
+    return false;
+  }
+  if (player.vy <= 80) {
+    return false;
+  }
+
+  const playerBox = makeCollider(player);
+  const previousPlayerBox = makeCollider({ ...player, y: player.prevY ?? player.y });
+  const userBox = makeCollider(user);
+  const horizontalOverlap = getHorizontalOverlap(player, user);
+  const requiredOverlap = Math.min(playerBox.w, userBox.w) * 0.28;
+  const wasAbove = previousPlayerBox.y + previousPlayerBox.h <= userBox.y + 10;
+  const crossedTop = playerBox.y + playerBox.h >= userBox.y;
+  const bodyIsStillAboveHeadZone = playerBox.y < userBox.y + Math.max(12, userBox.h * 0.18);
+
+  return horizontalOverlap >= requiredOverlap && wasAbove && crossedTop && bodyIsStillAboveHeadZone;
+}
+
+function stompUser(user) {
+  const damage = getUserStompDamage(user);
+  user.hp -= damage;
+  user.hurtTimer = 0.22;
+  user.stompCooldown = 0.16;
+  player.vy = user.hp <= 0 ? -620 : -520;
+  player.grounded = false;
+  player.airJumpsRemaining = Math.max(player.airJumpsRemaining || 0, Math.min(player.maxAirJumps || 0, 1));
+  spawnImpactParticles(user.x + user.w / 2, user.y + user.h * 0.18, user.tint || "#ffb84d", user.hp <= 0 ? 12 : 8, {
+    speedMin: 120,
+    speedMax: user.hp <= 0 ? 340 : 240,
+    gravity: 760,
+  });
+  addScreenShake(user.hp <= 0 ? 5 : 3, user.hp <= 0 ? 0.12 : 0.08);
+  if (user.hp <= 0) {
+    defeatUser(user, {
+      deathTimer: 0.42,
+      deathVy: -randomBetween(220, 340),
+      deathVx: (player.vx || 0) * 0.08,
     });
   }
 }
@@ -4939,6 +5000,7 @@ function updatePlayer(dt) {
 
   player.vy = Math.min(MAX_FALL_SPEED, player.vy + GRAVITY * dt);
   const previousY = player.y;
+  player.prevY = previousY;
   player.y += player.vy * dt;
   resolvePlatforms(player, "y", previousY);
   rememberPlayerSafeSpot();
@@ -5107,6 +5169,9 @@ function updateUsers(dt) {
     if (user.hurtTimer > 0) {
       user.hurtTimer -= dt;
     }
+    if (user.stompCooldown > 0) {
+      user.stompCooldown -= dt;
+    }
     if (user.attackPoseTimer > 0) {
       user.attackPoseTimer -= dt;
     }
@@ -5264,7 +5329,11 @@ function updateUsers(dt) {
     }
 
     if (rectsOverlap(player, user)) {
-      damagePlayer({ source: "enemy" });
+      if (canPlayerStompUser(user)) {
+        stompUser(user);
+      } else {
+        damagePlayer({ source: "enemy" });
+      }
     }
   }
 
