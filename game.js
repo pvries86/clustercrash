@@ -2551,13 +2551,13 @@ function getSlaPressure() {
 
 function getSlaDispatchInterval(tier = slaPriorityTier) {
   if (tier >= 3) {
-    return 6;
+    return 4;
   }
   if (tier === 2) {
-    return 9;
+    return 6;
   }
   if (tier === 1) {
-    return 12;
+    return 8;
   }
   return 0;
 }
@@ -2577,7 +2577,11 @@ function updateSlaEscalation(dt) {
 
   const nextTier = getSlaPriorityTier();
   const previousTier = slaPriorityTier;
-  if (nextTier > slaPriorityTier) {
+  if (nextTier > previousTier) {
+    for (let tier = previousTier + 1; tier <= nextTier; tier += 1) {
+      slaPriorityTier = tier;
+      spawnSlaIncidentDispatch({ force: true });
+    }
     slaPriorityTier = nextTier;
     slaDispatchTimer = getSlaDispatchInterval();
     addScreenShake(3 + slaPriorityTier, 0.1);
@@ -3828,14 +3832,14 @@ function getSlaDispatchPlatform(variant) {
   });
 }
 
-function spawnSlaIncidentDispatch() {
+function spawnSlaIncidentDispatch(options = {}) {
   if (slaPriorityTier <= 0 || currentLevelConfig.isBossLevel) {
     return false;
   }
 
   const visibleActiveUsers = users.filter((user) => !user.defeated && isEntityOnScreen(user, 140)).length;
   const maxVisibleUsers = 3 + slaPriorityTier * 2;
-  if (visibleActiveUsers >= maxVisibleUsers) {
+  if (!options.force && visibleActiveUsers >= maxVisibleUsers) {
     return false;
   }
 
@@ -3879,7 +3883,7 @@ function updateSlaDispatch(dt) {
     return;
   }
 
-  spawnSlaIncidentDispatch();
+  spawnSlaIncidentDispatch({ force: true });
   slaDispatchTimer = interval;
 }
 
@@ -7548,6 +7552,7 @@ preloadAssets()
     console.error(error);
     showMessage("Asset Load Failed", `Startup failed: ${error.message}. If you opened the game as a local file, try a local web server and refresh.`);
   });
+
 
 
 
