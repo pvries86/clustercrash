@@ -1144,6 +1144,7 @@ let currentLevelConfig = {
   bossSpeedScale: 1,
   bossAttackScale: 1,
   slaEscalationRate: 0,
+  enemyShootCooldownMultiplier: 1,
   theme: {
     skyTop: "#07111f",
     skyMid: "#09152a",
@@ -1848,6 +1849,214 @@ function getThemeWeightedHazardSpawnWeight(kind, tuning = getThemeTuning()) {
   return baseWeight * (tuning.hazardWeights[kind] ?? 1);
 }
 
+function getLateGameDirector(level = currentLevel, theme = currentLevelConfig?.theme) {
+  const band = level < 12 ? 0 : level < 20 ? 1 : level < 30 ? 2 : level < 40 ? 3 : 4;
+  return {
+    enabled: band > 0,
+    band,
+    themeStyle: theme?.backgroundStyle || "datacenter",
+    comboChance: band >= 4 ? 0.24 : band >= 3 ? 0.18 : band >= 2 ? 0.1 : 0,
+    extraMinWidth: band >= 3 ? 350 : 380,
+    supportWeightMultiplier: band >= 4 ? 1.35 : band >= 3 ? 1.24 : band >= 2 ? 1.12 : 1,
+  };
+}
+
+function getLateGameThemeEnemyMultiplier(kind, director) {
+  if (!director.enabled) return 1;
+  const band = director.band;
+  const table = {
+    office: { emailer: 1 + band * 0.22, vip: 1 + band * 0.2, ticketSpammer: 1 + band * 0.22, auditor: 1 + band * 0.1, armoredElite: 0.86 },
+    serverroom: { armored: 1 + band * 0.18, armoredElite: 1 + band * 0.22, auditor: 1 + band * 0.2, changeManager: 1 + band * 0.16, spamCaller: 0.9 },
+    datacenter: { emailer: 1 + band * 0.1, ticketSpammer: 1 + band * 0.12, jumper: 1 + band * 0.1, escalationUser: 1 + band * 0.1 },
+    drsite: { escalationUser: 1 + band * 0.28, spamCaller: 1 + band * 0.18, ticketSpammer: 1 + band * 0.18, vip: 1 + band * 0.1, walker: 0.82 },
+  };
+  return table[director.themeStyle]?.[kind] ?? 1;
+}
+
+function getLateGameThemeHazardMultiplier(kind, director) {
+  if (!director.enabled) return 1;
+  const band = director.band;
+  const table = {
+    office: { dataLeak: 1 + band * 0.12, static: 1 + band * 0.1, cableMess: 1 + band * 0.08, backupWindow: 0.9 },
+    serverroom: { cableMess: 1 + band * 0.18, vent: 1 + band * 0.18, static: 1 + band * 0.12, diskFailure: 1 + band * 0.08 },
+    datacenter: { static: 1 + band * 0.1, reboot: 1 + band * 0.1, cableMess: 1 + band * 0.08, firewall: 1 + band * 0.05 },
+    drsite: { backupWindow: 1 + band * 0.28, diskFailure: 1 + band * 0.28, reboot: 1 + band * 0.14, dataLeak: 0.86, vent: 0.9 },
+  };
+  return table[director.themeStyle]?.[kind] ?? 1;
+}
+
+function getLateGameEnemyWeight(variant, platform, hazard, director, themeTuning) {
+  let weight = getThemeWeightedEnemySpawnWeight(variant, themeTuning);
+  if (!director.enabled) return weight;
+  weight *= getLateGameThemeEnemyMultiplier(variant.kind, director);
+  if (variantHasSupportBehavior(variant) && platform?.w >= 330) weight *= director.supportWeightMultiplier;
+  if (director.band >= 2 && (hazard?.kind === "backupWindow" || hazard?.kind === "diskFailure") && ["escalationUser", "ticketSpammer", "spamCaller"].includes(variant.kind)) {
+    weight *= 1.45 + director.band * 0.08;
+  }
+  if (director.band >= 3 && platform?.w >= 390 && ["auditor", "changeManager", "vip"].includes(variant.kind)) weight *= 1.16;
+  return weight;
+}
+
+function getLateGameHazardWeight(kind, director, themeTuning) {
+  let weight = getThemeWeightedHazardSpawnWeight(kind, themeTuning);
+  if (!director.enabled) return weight;
+  weight *= getLateGameThemeHazardMultiplier(kind, director);
+  if (director.band >= 3 && ["backupWindow", "diskFailure", "reboot"].includes(kind)) weight *= 1.12;
+  return weight;
+}
+
+function getLateGameComplementKinds(primaryKind, hazardKind, director) {
+  if (hazardKind === "backupWindow" || hazardKind === "diskFailure") return ["escalationUser", "ticketSpammer"];
+  if (primaryKind === "auditor" || primaryKind === "changeManager") return ["emailer", "ticketSpammer"];
+  if (primaryKind === "escalationUser") return ["spamCaller", "jumper"];
+  if (primaryKind === "spamCaller" || primaryKind === "jumper") return ["escalationUser"];
+  if (primaryKind === "vip") return ["armored", "jumper", "emailer"];
+  if (director.band >= 3 && ["armored", "jumper", "emailer"].includes(primaryKind)) return ["vip", "ticketSpammer"];
+  return ["emailer", "ticketSpammer", "jumper", "spamCaller", "escalationUser"];
+}
+
+function pickLateGameExtraSpawnX(platform, variant, hazardZone) {
+  const leftX = platform.x + 28;
+  const rightX = platform.x + platform.w - variant.w - 28;
+  if (!hazardZone) return Math.random() > 0.5 ? rightX : leftX;
+  const rightProbe = { x: rightX, y: platform.y - variant.h, w: variant.w, h: variant.h, hitbox: variant.hitbox };
+  return rectsOverlap(rightProbe, hazardZone) ? leftX : rightX;
+}
+
+function maybeSpawnLateGameEncounter(platform, primaryVariant, hazardZone, director, unlockedVariants, enemyScaling, themeTuning) {
+  if (!director.enabled || !primaryVariant || director.comboChance <= 0 || platform.w < director.extraMinWidth) return false;
+  if (hazardZone && platform.w < director.extraMinWidth + 50) return false;
+  if (Math.random() > director.comboChance) return false;
+  const complementKinds = getLateGameComplementKinds(primaryVariant.kind, hazardZone?.kind, director);
+  const candidates = unlockedVariants.filter((variant) => complementKinds.includes(variant.kind) && variant.kind !== primaryVariant.kind && variantCanEscortSupport(variant));
+  if (!candidates.length) return false;
+  const extraVariant = pickWeighted(candidates, (variant) => getLateGameEnemyWeight(variant, platform, hazardZone, director, themeTuning));
+  if (!extraVariant) return false;
+  const spawnX = pickLateGameExtraSpawnX(platform, extraVariant, hazardZone);
+  spawnUserFromVariant(platform, extraVariant, spawnX, enemyScaling, { dir: spawnX < platform.x + platform.w / 2 ? 1 : -1 });
+  return true;
+}
+
+function getScalingDirector(level = currentLevel, theme = currentLevelConfig?.theme) {
+  const band = level < 15 ? 0 : level < 25 ? 1 : level < 35 ? 2 : 3;
+  const style = theme?.backgroundStyle || "datacenter";
+  const themeScaling = {
+    office: { gap: 0.9, stepUp: 0.86, stepDown: 0.9, hazard: 0.96, enemy: 1.04, width: 1.03, speed: 0.96 },
+    serverroom: { gap: 0.96, stepUp: 1.02, stepDown: 0.98, hazard: 1.08, enemy: 1.02, width: 0.96, speed: 0.98 },
+    datacenter: { gap: 1, stepUp: 1, stepDown: 1, hazard: 1, enemy: 1, width: 1, speed: 1 },
+    drsite: { gap: 1.08, stepUp: 1.02, stepDown: 1.08, hazard: 1.06, enemy: 1.02, width: 0.98, speed: 0.98 },
+  }[style] || { gap: 1, stepUp: 1, stepDown: 1, hazard: 1, enemy: 1, width: 1, speed: 1 };
+
+  return {
+    enabled: band > 0,
+    band,
+    themeStyle: style,
+    gapMultiplier: themeScaling.gap * (band >= 3 ? 1.04 : band >= 2 ? 1.02 : 1),
+    stepUpMultiplier: themeScaling.stepUp * (band >= 3 ? 1.04 : 1),
+    stepDownMultiplier: themeScaling.stepDown * (band >= 2 ? 1.04 : 1),
+    hazardChanceMultiplier: themeScaling.hazard * (band >= 3 ? 1.08 : band >= 2 ? 1.04 : 1),
+    enemyChanceMultiplier: themeScaling.enemy * (band >= 3 ? 1.06 : band >= 2 ? 1.03 : 1),
+    platformWidthMultiplier: themeScaling.width,
+    speedMultiplier: themeScaling.speed * (band >= 3 ? 0.94 : band >= 2 ? 0.97 : 1),
+    shootCooldownMultiplier: band >= 3 ? 0.9 : band >= 2 ? 0.94 : band >= 1 ? 0.98 : 1,
+  };
+}
+
+function getScalingEnemyWeightMultiplier(variant, director) {
+  if (!director.enabled) return 1;
+  const kind = variant.kind;
+  const isRanged = !!variant.behavior?.ranged?.enabled;
+  let multiplier = 1;
+  if (isRanged) multiplier *= 1 + director.band * 0.12;
+  if (variantHasSupportBehavior(variant)) multiplier *= 1 + director.band * 0.1;
+  if (["armored", "armoredElite"].includes(kind)) multiplier *= 1 + director.band * 0.1;
+  if (kind === "escalationUser") multiplier *= 1 + director.band * 0.12;
+  return multiplier;
+}
+
+function getSegmentLayoutIntent(index, totalSegments, director) {
+  if (!director.enabled) return "normal";
+  if (index > 0 && index % 5 === 0) return "recovery";
+  if (director.band >= 2) {
+    const alternatingBeat = index % 6;
+    if (alternatingBeat === 2) return "climb";
+    if (alternatingBeat === 4) return "drop";
+  }
+
+  const style = director.themeStyle;
+  const weights = {
+    recovery: index > totalSegments - 3 ? 1.4 : 0.9,
+    climb: style === "serverroom" ? 1.25 : 1,
+    drop: style === "drsite" ? 1.35 : 1,
+    hazard: style === "drsite" || style === "serverroom" ? 1.35 : 1,
+    combat: style === "office" ? 1.45 : 1,
+  };
+  if (director.band >= 2) {
+    weights.hazard += 0.25;
+    weights.combat += 0.2;
+  }
+  if (director.band >= 3) {
+    weights.climb += 0.15;
+    weights.drop += 0.2;
+  }
+  return pickWeighted(Object.keys(weights), (intent) => weights[intent]) || "normal";
+}
+
+function getLayoutGapRange(isFloor, maxGapWidth, themeTuning, director, intent) {
+  const baseMin = isFloor ? Math.round(60 * themeTuning.floorGapMultiplier) : 70;
+  const baseMax = isFloor ? Math.round(120 * themeTuning.floorGapMultiplier) : maxGapWidth;
+  if (!director.enabled) return { min: baseMin, max: baseMax };
+
+  const intentScale = { recovery: 0.58, climb: 0.72, combat: 0.8, hazard: 0.86, drop: 1.08, normal: 1 }[intent] || 1;
+  const min = Math.max(baseMin, Math.round(baseMin * (intent === "recovery" ? 0.85 : 1)));
+  const max = Math.max(min + 12, Math.round(baseMax * intentScale));
+  return { min, max: Math.min(baseMax, max) };
+}
+
+function getLayoutWidthRange(isFloor, themeTuning, director, intent) {
+  const baseMin = isFloor ? Math.round(380 * themeTuning.platformWidthMultiplier) : Math.round(220 * themeTuning.platformWidthMultiplier);
+  const baseMax = isFloor ? Math.round(620 * themeTuning.platformWidthMultiplier) : Math.round(360 * themeTuning.platformWidthMultiplier);
+  if (!director.enabled || isFloor) return { min: baseMin, max: baseMax };
+
+  const ranges = {
+    recovery: [300, 390],
+    climb: [220, 330],
+    drop: [230, 340],
+    hazard: [280, 380],
+    combat: [300, 390],
+    normal: [baseMin, baseMax],
+  };
+  const [minRaw, maxRaw] = ranges[intent] || ranges.normal;
+  const widthScale = themeTuning.platformWidthMultiplier * director.platformWidthMultiplier;
+  const min = Math.max(210, Math.round(minRaw * widthScale));
+  const max = Math.max(min + 24, Math.round(maxRaw * widthScale));
+  return { min, max };
+}
+
+function getLayoutVerticalOffset(intent, maxStepUp, maxStepDown, director) {
+  if (!director.enabled || intent === "normal") {
+    return randomInt(-maxStepUp, maxStepDown);
+  }
+  if (intent === "recovery") return randomInt(-70, 70);
+  if (intent === "climb") return -randomInt(Math.round(maxStepUp * 0.35), maxStepUp);
+  if (intent === "drop") return randomInt(Math.round(maxStepDown * 0.35), maxStepDown);
+  if (intent === "hazard") return randomInt(-Math.round(maxStepUp * 0.55), Math.round(maxStepDown * 0.55));
+  if (intent === "combat") return randomInt(-Math.round(maxStepUp * 0.45), Math.round(maxStepDown * 0.45));
+  return randomInt(-maxStepUp, maxStepDown);
+}
+
+function getSegmentHazardChance(baseChance, intent, director) {
+  if (!director.enabled) return baseChance;
+  const multiplier = { recovery: 0.45, climb: 0.8, drop: 0.85, hazard: 1.22, combat: 0.9, normal: 1 }[intent] || 1;
+  return Math.min(baseChance * multiplier, 0.98);
+}
+
+function getSegmentEnemyChance(baseChance, intent, director) {
+  if (!director.enabled) return baseChance;
+  const multiplier = { recovery: 0.55, climb: 0.86, drop: 0.88, hazard: 0.92, combat: 1.18, normal: 1 }[intent] || 1;
+  return Math.min(baseChance * multiplier, 0.98);
+}
+
 function pickThemePlatformStyle(theme, segmentIndex) {
   if (segmentIndex % 4 === 3) {
     return "bridge";
@@ -2250,7 +2459,32 @@ function buildLevelConfig(level) {
     : roomTheme.backgroundImageBase || null;
 
   const tuning = getThemeTuning(roomTheme);
+  const scalingDirector = getScalingDirector(level, roomTheme);
   const isBossLevel = level % BOSS_LEVEL_INTERVAL === 0;
+  const rawMaxGapWidth = Math.round((BASE_GAP_WIDTH + Math.floor(tier * 2.3)) * tuning.gapMultiplier);
+  const rawMaxStepUp = BASE_STEP_UP + Math.floor(tier * 1.2);
+  const rawMaxStepDown = BASE_STEP_DOWN + Math.floor(tier * 1.4);
+  const maxGapWidth = scalingDirector.enabled
+    ? Math.min(Math.round(rawMaxGapWidth * scalingDirector.gapMultiplier), 380)
+    : Math.min(rawMaxGapWidth, 390);
+  const maxStepUp = scalingDirector.enabled
+    ? Math.min(Math.round(rawMaxStepUp * scalingDirector.stepUpMultiplier), 225)
+    : Math.min(rawMaxStepUp, 230);
+  const maxStepDown = scalingDirector.enabled
+    ? Math.min(Math.round(rawMaxStepDown * scalingDirector.stepDownMultiplier), 275)
+    : Math.min(rawMaxStepDown, 280);
+  const hazardChance = scalingDirector.enabled
+    ? Math.min((0.5 + tier * 0.007) * tuning.hazardChanceMultiplier * scalingDirector.hazardChanceMultiplier, 0.96)
+    : Math.min((0.5 + tier * 0.008) * tuning.hazardChanceMultiplier, 0.98);
+  const enemyChance = scalingDirector.enabled
+    ? Math.min((0.65 + tier * 0.005) * tuning.enemyChanceMultiplier * scalingDirector.enemyChanceMultiplier, 0.96)
+    : Math.min((0.65 + tier * 0.006) * tuning.enemyChanceMultiplier, 0.98);
+  const minUserSpeed = scalingDirector.enabled
+    ? Math.min(Math.round((90 + Math.floor(tier * 2.6)) * scalingDirector.speedMultiplier), 330)
+    : Math.min(90 + Math.floor(tier * 3.2), 420);
+  const maxUserSpeed = scalingDirector.enabled
+    ? Math.min(Math.round((170 + Math.floor(tier * 4.2)) * scalingDirector.speedMultiplier), 520)
+    : Math.min(170 + Math.floor(tier * 5.4), 700);
 
   return {
     isBossLevel,
@@ -2261,13 +2495,14 @@ function buildLevelConfig(level) {
     slaEscalationRate: isBossLevel ? 0 : Math.min(1.15 + tier * 0.01, 1.35),
     ticketTarget: Math.min(BASE_TICKETS + Math.floor(tier * 0.35) + longRunBonus, 40),
     segments: Math.min(BASE_LEVEL_SEGMENTS + Math.floor(tier * 0.4) + longRunBonus, 48),
-    maxGapWidth: Math.min(Math.round((BASE_GAP_WIDTH + Math.floor(tier * 2.3)) * tuning.gapMultiplier), 390),
-    maxStepUp: Math.min(BASE_STEP_UP + Math.floor(tier * 1.2), 230),
-    maxStepDown: Math.min(BASE_STEP_DOWN + Math.floor(tier * 1.4), 280),
-    hazardChance: Math.min((0.5 + tier * 0.008) * tuning.hazardChanceMultiplier, 0.98),
-    enemyChance: Math.min((0.65 + tier * 0.006) * tuning.enemyChanceMultiplier, 0.98),
-    minUserSpeed: Math.min(90 + Math.floor(tier * 3.2), 420),
-    maxUserSpeed: Math.min(170 + Math.floor(tier * 5.4), 700),
+    maxGapWidth,
+    maxStepUp,
+    maxStepDown,
+    hazardChance,
+    enemyChance,
+    minUserSpeed,
+    maxUserSpeed,
+    enemyShootCooldownMultiplier: scalingDirector.shootCooldownMultiplier,
     theme: { ...roomTheme, backgroundImage },
     roomName: roomTheme.name,
   };
@@ -2849,21 +3084,23 @@ function buildProceduralLevel() {
   let ticketsPlaced = 0;
   const enemyScaling = getEnemyUpgradeScaling();
   const themeTuning = getThemeTuning(currentLevelConfig.theme);
+  const lateGameDirector = getLateGameDirector(currentLevel, currentLevelConfig.theme);
+  const scalingDirector = getScalingDirector(currentLevel, currentLevelConfig.theme);
 
   for (let i = 0; i < currentLevelConfig.segments; i += 1) {
+    const layoutIntent = getSegmentLayoutIntent(i, currentLevelConfig.segments, scalingDirector);
     const segmentStyle = pickThemePlatformStyle(currentLevelConfig.theme, i);
     const isFloor = segmentStyle === "bridge";
     const platformKind = isFloor ? "floor" : segmentStyle;
-    const gap = isFloor
-      ? randomInt(Math.round(60 * themeTuning.floorGapMultiplier), Math.round(120 * themeTuning.floorGapMultiplier))
-      : randomInt(70, currentLevelConfig.maxGapWidth);
-    const width = isFloor
-      ? randomInt(Math.round(380 * themeTuning.platformWidthMultiplier), Math.round(620 * themeTuning.platformWidthMultiplier))
-      : randomInt(Math.round(220 * themeTuning.platformWidthMultiplier), Math.round(360 * themeTuning.platformWidthMultiplier));
+    const gapRange = getLayoutGapRange(isFloor, currentLevelConfig.maxGapWidth, themeTuning, scalingDirector, layoutIntent);
+    const widthRange = getLayoutWidthRange(isFloor, themeTuning, scalingDirector, layoutIntent);
+    const gap = randomInt(gapRange.min, gapRange.max);
+    const width = randomInt(widthRange.min, widthRange.max);
     const platformHeight = isFloor ? 80 : getGeneratedPlatformHeight(platformKind);
+    const verticalOffset = getLayoutVerticalOffset(layoutIntent, currentLevelConfig.maxStepUp, currentLevelConfig.maxStepDown, scalingDirector);
     const platformY = isFloor
       ? GROUND_Y
-      : Math.max(410, Math.min(560, currentY + randomInt(-currentLevelConfig.maxStepUp, currentLevelConfig.maxStepDown)));
+      : Math.max(410, Math.min(560, currentY + verticalOffset));
     const platform = {
       x: cursorX + gap,
       y: platformY,
@@ -2888,13 +3125,18 @@ function buildProceduralLevel() {
     let surfaceFirewall = null;
     let surfaceHazard = null;
     let surfaceHazardSide = firewallSide;
-    const canSpawnSurfaceHazard = width >= (isFloor ? 320 : 250);
-    if (canSpawnSurfaceHazard && Math.random() < currentLevelConfig.hazardChance) {
+    const demandingMovement = scalingDirector.enabled
+      && !isFloor
+      && gap > currentLevelConfig.maxGapWidth * 0.82
+      && Math.abs(verticalOffset) > Math.max(currentLevelConfig.maxStepUp, currentLevelConfig.maxStepDown) * 0.7;
+    const canSpawnSurfaceHazard = width >= (isFloor ? 320 : 250) && !demandingMovement;
+    const segmentHazardChance = getSegmentHazardChance(currentLevelConfig.hazardChance, layoutIntent, scalingDirector);
+    if (canSpawnSurfaceHazard && Math.random() < segmentHazardChance) {
       const unlockedSpecialHazards = Object.keys(SPECIAL_HAZARD_TYPES)
         .filter((key) => currentLevel >= (SPECIAL_HAZARD_TYPES[key].unlockLevel || 1));
       const hazardKind = isFloor
-        ? pickWeighted(unlockedSpecialHazards.filter((key) => SPECIAL_HAZARD_TYPES[key].allowedOnFloor), (key) => getThemeWeightedHazardSpawnWeight(key, themeTuning))
-        : pickWeighted(["firewall", ...unlockedSpecialHazards], (key) => getThemeWeightedHazardSpawnWeight(key, themeTuning));
+        ? pickWeighted(unlockedSpecialHazards.filter((key) => SPECIAL_HAZARD_TYPES[key].allowedOnFloor), (key) => getLateGameHazardWeight(key, lateGameDirector, themeTuning))
+        : pickWeighted(["firewall", ...unlockedSpecialHazards], (key) => getLateGameHazardWeight(key, lateGameDirector, themeTuning));
 
       if (hazardKind === "firewall") {
         surfaceFirewall = {
@@ -2982,19 +3224,23 @@ function buildProceduralLevel() {
       });
     }
 
-    if (width >= 250 && Math.random() < currentLevelConfig.enemyChance) {
+    const segmentEnemyChance = getSegmentEnemyChance(currentLevelConfig.enemyChance, layoutIntent, scalingDirector);
+    if (width >= 250 && Math.random() < segmentEnemyChance) {
       const unlockedVariants = USER_VARIANTS.filter((variant) => currentLevel >= (variant.behavior?.unlockLevel || 1));
       const roomyEnoughForSupport = width >= 330;
       const spawnPool = roomyEnoughForSupport
         ? unlockedVariants
         : unlockedVariants.filter((entry) => !variantHasSupportBehavior(entry));
-      const variant = pickWeighted(spawnPool.length ? spawnPool : unlockedVariants, (entry) => getThemeWeightedEnemySpawnWeight(entry, themeTuning));
+      const variant = pickWeighted(spawnPool.length ? spawnPool : unlockedVariants, (entry) => getLateGameEnemyWeight(entry, platform, surfaceHazard, lateGameDirector, themeTuning) * getScalingEnemyWeightMultiplier(entry, scalingDirector));
       const supportGroup = variantHasSupportBehavior(variant) && roomyEnoughForSupport;
       if (supportGroup) {
         spawnSupportUserGroup(platform, variant, unlockedVariants, enemyScaling, surfaceHazard, themeTuning);
       } else {
         const spawnX = pickSafeUserSpawnX(platform, variant, surfaceHazard);
         spawnUserFromVariant(platform, variant, spawnX, enemyScaling);
+      }
+      if (layoutIntent !== "recovery") {
+        maybeSpawnLateGameEncounter(platform, variant, surfaceHazard, lateGameDirector, unlockedVariants, enemyScaling, themeTuning);
       }
     }
 
@@ -3666,7 +3912,7 @@ function spawnUserFromVariant(platform, variant, spawnX, enemyScaling, options =
     snareTimer: 0,
     jumpDebuffTimer: 0,
     hazardCycles: {},
-    shootCooldownMultiplier: enemyScaling.shootCooldownMultiplier,
+    shootCooldownMultiplier: enemyScaling.shootCooldownMultiplier * (currentLevelConfig.enemyShootCooldownMultiplier || 1),
     projectileSpeedMultiplier: enemyScaling.projectileSpeedMultiplier,
     tint: variant.tint,
     grounded: false,
