@@ -2258,7 +2258,7 @@ function buildLevelConfig(level) {
     bossHp: Math.floor(tier * 3.0),
     bossSpeedScale: Math.min(1 + tier * 0.008, 1.85),
     bossAttackScale: Math.min(1 + tier * 0.009, 1.85),
-    slaEscalationRate: isBossLevel ? 0 : Math.min(1.9 + tier * 0.06, 3.2),
+    slaEscalationRate: isBossLevel ? 0 : Math.min(1.15 + tier * 0.01, 1.35),
     ticketTarget: Math.min(BASE_TICKETS + Math.floor(tier * 0.35) + longRunBonus, 40),
     segments: Math.min(BASE_LEVEL_SEGMENTS + Math.floor(tier * 0.4) + longRunBonus, 48),
     maxGapWidth: Math.min(Math.round((BASE_GAP_WIDTH + Math.floor(tier * 2.3)) * tuning.gapMultiplier), 390),
@@ -2549,29 +2549,17 @@ function getSlaPressure() {
   };
 }
 
-function getSlaDispatchInterval() {
-  if (slaPriorityTier >= 3) {
-    return 4.2;
+function getSlaDispatchInterval(tier = slaPriorityTier) {
+  if (tier >= 3) {
+    return 6;
   }
-  if (slaPriorityTier === 2) {
-    return 6.1;
+  if (tier === 2) {
+    return 9;
   }
-  if (slaPriorityTier === 1) {
-    return 8.4;
+  if (tier === 1) {
+    return 12;
   }
   return 0;
-}
-
-function stabilizeSlaEscalation(amount = 12) {
-  if (currentLevelConfig.isBossLevel) {
-    return;
-  }
-  slaEscalation = Math.max(0, slaEscalation - amount);
-  slaPriorityTier = getSlaPriorityTier();
-  slaNoRestoreTimer = 0;
-  slaDispatchTimer = Math.max(slaDispatchTimer, getSlaDispatchInterval() * 0.55);
-  slaStabilizedTimer = Math.max(slaStabilizedTimer, 1.1);
-  syncHud();
 }
 
 function updateSlaEscalation(dt) {
@@ -2579,29 +2567,28 @@ function updateSlaEscalation(dt) {
     return;
   }
 
-  const objectiveDone = player.score >= currentLevelConfig.ticketTarget;
-  if (objectiveDone) {
-    slaNoRestoreTimer = 0;
-    slaStabilizedTimer = Math.max(slaStabilizedTimer - dt, 0);
-    return;
-  }
-
   slaNoRestoreTimer += dt;
   if (slaStabilizedTimer > 0) {
     slaStabilizedTimer = Math.max(0, slaStabilizedTimer - dt);
   } else {
-    const staleTicketMultiplier = slaNoRestoreTimer > 12 ? 2.25 : slaNoRestoreTimer > 7 ? 1.65 : 1;
+    const staleTicketMultiplier = slaNoRestoreTimer > 18 ? 1.8 : slaNoRestoreTimer > 10 ? 1.35 : 1;
     slaEscalation = Math.min(100, slaEscalation + (currentLevelConfig.slaEscalationRate || 0) * staleTicketMultiplier * dt);
   }
 
   const nextTier = getSlaPriorityTier();
+  const previousTier = slaPriorityTier;
   if (nextTier > slaPriorityTier) {
     slaPriorityTier = nextTier;
+    slaDispatchTimer = getSlaDispatchInterval();
     addScreenShake(3 + slaPriorityTier, 0.1);
     spawnSystemParticles(player.x + player.w / 2, player.y + player.h * 0.35, slaPriorityTier >= 3 ? "#ff5b6e" : "#ffd166", 10 + slaPriorityTier * 2, { speedMin: 80, speedMax: 230 });
     syncHud();
   } else {
     slaPriorityTier = nextTier;
+    if (nextTier !== previousTier) {
+      const interval = getSlaDispatchInterval();
+      slaDispatchTimer = interval > 0 ? Math.min(slaDispatchTimer, interval) : 0;
+    }
   }
 
   updateSlaDispatch(dt);
@@ -3144,6 +3131,32 @@ function updateBestRun() {
 
 hudBestRun.textContent = `${bestRunScore} / L${bestLevel}`;
 
+function getSlaHudText() {
+  if (currentLevelConfig.isBossLevel || !currentLevelConfig.slaEscalationRate) {
+    return "SLA paused";
+  }
+
+  const priority = getSlaPriorityLabel();
+  const dispatchInterval = getSlaDispatchInterval();
+  const dispatchText = dispatchInterval > 0 && slaDispatchTimer > 0
+    ? ` | Dispatch ${Math.ceil(slaDispatchTimer)}s`
+    : priority === "OK"
+      ? " | P3 at 35%"
+      : " | Dispatch imminent";
+  return `${priority} ${Math.round(slaEscalation)}%${dispatchText}`;
+}
+
+function updateSlaHudCard() {
+  const card = hudBuffs.closest(".hud-card");
+  if (!card) {
+    return;
+  }
+  const priority = currentLevelConfig.isBossLevel ? "paused" : getSlaPriorityLabel().toLowerCase();
+  card.classList.remove("sla-ok", "sla-p3", "sla-p2", "sla-p1", "sla-paused");
+  card.classList.add(`sla-${priority}`);
+  hudBuffs.textContent = getSlaHudText();
+}
+
 function syncHud() {
   updateBestRun();
 
@@ -3180,16 +3193,12 @@ function syncHud() {
   if (player?.pressureResponseTimer > 0) {
     activeEffects.push(`Boss Tempo ${Math.ceil(player.pressureResponseTimer)}s`);
   }
-  if (!currentLevelConfig.isBossLevel && currentLevelConfig.slaEscalationRate > 0) {
-    const dispatchInterval = getSlaDispatchInterval();
-    const dispatchText = dispatchInterval > 0 && slaDispatchTimer > 0 ? ` Dispatch ${Math.ceil(slaDispatchTimer)}s` : "";
-    activeEffects.push(`SLA ${getSlaPriorityLabel()} ${Math.round(slaEscalation)}%${dispatchText}`);
-  }
   if (debugAutoAimEnabled) {
     activeEffects.push("Smart Assist TEST");
   }
-  hudStats.textContent = getBuildStatsText({ compact: true });
-  hudBuffs.textContent = activeEffects.length > 0 ? activeEffects.join(" | ") : "-";
+  const buildStatsText = getBuildStatsText({ compact: true });
+  hudStats.textContent = activeEffects.length > 0 ? `${buildStatsText} | ${activeEffects.join(" | ")}` : buildStatsText;
+  updateSlaHudCard();
 }
 
 function showMessage(title, text) {
@@ -3865,14 +3874,13 @@ function updateSlaDispatch(dt) {
     return;
   }
 
-  const urgencyMultiplier = slaNoRestoreTimer > 14 ? 0.72 : slaNoRestoreTimer > 9 ? 0.86 : 1;
   slaDispatchTimer = Math.max(0, slaDispatchTimer - dt);
   if (slaDispatchTimer > 0) {
     return;
   }
 
   spawnSlaIncidentDispatch();
-  slaDispatchTimer = interval * urgencyMultiplier;
+  slaDispatchTimer = interval;
 }
 
 function resolvePlatforms(entity, axis, previousValue, options = {}) {
@@ -6189,7 +6197,6 @@ function updateTickets(time) {
       player.score += 1;
       runScore += 1;
       runStats.vmsRestored += 1;
-      stabilizeSlaEscalation(18);
       const bonusRecoveryCount = getUpgradeCount("bonusRecovery");
       if (bonusRecoveryCount > 0) {
         traitState.bonusRecoveryTickets += 1;
@@ -7541,4 +7548,9 @@ preloadAssets()
     console.error(error);
     showMessage("Asset Load Failed", `Startup failed: ${error.message}. If you opened the game as a local file, try a local web server and refresh.`);
   });
+
+
+
+
+
 
