@@ -12,6 +12,9 @@ const messageHazards = document.getElementById("messageHazards");
 const messageEnemies = document.getElementById("messageEnemies");
 const messagePickups = document.getElementById("messagePickups");
 const messageSummary = document.getElementById("messageSummary");
+const tutorialToast = document.getElementById("tutorialToast");
+const tutorialToastTitle = document.getElementById("tutorialToastTitle");
+const tutorialToastText = document.getElementById("tutorialToastText");
 const resetBestRunButton = document.getElementById("resetBestRunButton");
 const pauseResetBestRunButton = document.getElementById("pauseResetBestRunButton");
 const upgradeOverlay = document.getElementById("upgradeOverlay");
@@ -1072,6 +1075,10 @@ function createRunUpgrades() {
     heavyKeyboards: 0,
     sprintBoots: 0,
     tripleJump: 0,
+    stompReboot: 0,
+    priorityBounce: 0,
+    rootCauseImpact: 0,
+    softLanding: 0,
     hypervisorGuard: 0,
     ticketVacuum: 0,
     bounceKeys: 0,
@@ -1208,6 +1215,8 @@ let pendingLevelRestart = null;
 let nextHazardId = 1;
 let assetsReady = false;
 let pendingCampaignStart = false;
+let tutorialToastTimer = 0;
+let tutorialHintsShown = createTutorialHintsShown();
 
 function createRunStats() {
   return {
@@ -1220,6 +1229,61 @@ function createRunStats() {
     livesBurned: 0,
     shieldPops: 0,
   };
+}
+
+
+function createTutorialHintsShown() {
+  return {
+    controls: false,
+    enemyOptions: false,
+    jumpUsed: false,
+    throwUsed: false,
+    stompUsed: false,
+  };
+}
+
+function showTutorialToast(id, title, text, duration = 4.6) {
+  if (!tutorialToast || tutorialHintsShown[id]) {
+    return;
+  }
+  tutorialHintsShown[id] = true;
+  tutorialToastTitle.textContent = title;
+  tutorialToastText.textContent = text;
+  tutorialToastTimer = duration;
+  tutorialToast.classList.remove("hidden");
+}
+
+function hideTutorialToast() {
+  tutorialToastTimer = 0;
+  tutorialToast?.classList.add("hidden");
+}
+
+function updateTutorialToast(dt) {
+  if (!tutorialToast || tutorialToastTimer <= 0) {
+    return;
+  }
+  tutorialToastTimer = Math.max(0, tutorialToastTimer - dt);
+  if (tutorialToastTimer <= 0) {
+    tutorialToast.classList.add("hidden");
+  }
+}
+
+function updateTutorialPrompts(dt) {
+  updateTutorialToast(dt);
+  if (gameState !== "playing" || !player || currentLevelConfig.isBossLevel) {
+    return;
+  }
+  if (currentLevel === 1 && !tutorialHintsShown.controls) {
+    showTutorialToast("controls", "Controls", "Move with A/D or arrows. Jump with W, Arrow Up, or Space. Throw keyboards with F or Enter.", 5.4);
+    return;
+  }
+  if (tutorialHintsShown.enemyOptions) {
+    return;
+  }
+  const visibleEnemy = users.some((user) => isUserActiveTarget(user) && isEntityOnScreen(user, 80));
+  if (visibleEnemy) {
+    showTutorialToast("enemyOptions", "Handle Users", "Throw keyboards with F or Enter, or jump on users from above to bounce and resolve them.", 5.2);
+  }
 }
 
 function getUpgradeCount(id) {
@@ -1404,6 +1468,42 @@ const UPGRADE_POOL = [
     maxStacks: 2,
     preview: () => `Air jumps ${1 + getUpgradeCount("tripleJump")} -> ${2 + getUpgradeCount("tripleJump")}`,
     apply: () => { runUpgrades.tripleJump += 1; },
+  },
+  {
+    id: "stompReboot",
+    name: "Stomp Reboot",
+    rarity: "common",
+    description: "A successful stomp restores air jumps so aggressive routes can keep moving.",
+    maxStacks: 2,
+    preview: () => `Restore ${getUpgradeCount("stompReboot") + 1} air jump${getUpgradeCount("stompReboot") === 0 ? "" : "s"} on stomp`,
+    apply: () => { runUpgrades.stompReboot += 1; },
+  },
+  {
+    id: "priorityBounce",
+    name: "Priority Bounce",
+    rarity: "uncommon",
+    description: "Stomps bounce you higher, giving safer exits after risky user handling.",
+    maxStacks: 3,
+    preview: () => `+${Math.round((getUpgradeCount("priorityBounce") + 1) * 12)}% stomp bounce`,
+    apply: () => { runUpgrades.priorityBounce += 1; },
+  },
+  {
+    id: "rootCauseImpact",
+    name: "Root Cause Impact",
+    rarity: "rare",
+    description: "Stomps deal more damage, making armored and escalated users easier to resolve from above.",
+    maxStacks: 3,
+    preview: () => `Stomp damage +${getUpgradeCount("rootCauseImpact") + 1}`,
+    apply: () => { runUpgrades.rootCauseImpact += 1; },
+  },
+  {
+    id: "softLanding",
+    name: "Soft Landing",
+    rarity: "rare",
+    description: "After a stomp, gain a tiny grace window so crowded platforms do not punish clean hits.",
+    maxStacks: 2,
+    preview: () => `${(0.18 + (getUpgradeCount("softLanding") + 1) * 0.12).toFixed(2)}s post-stomp grace`,
+    apply: () => { runUpgrades.softLanding += 1; },
   },
   {
     id: "hypervisorGuard",
@@ -3316,6 +3416,7 @@ function resetRun(preservedLives = null) {
   hideMessageGuide();
   messageOverlay.classList.add("hidden");
   upgradeOverlay.classList.add("hidden");
+  hideTutorialToast();
   hudLevel.textContent = String(currentLevel);
   hudPlayer.textContent = playerConfigs[selectedPlayerKey].label;
   syncHud();
@@ -3325,6 +3426,7 @@ function startCampaign() {
   currentLevel = 1;
   runScore = 0;
   runStats = createRunStats();
+  tutorialHintsShown = createTutorialHintsShown();
   resetRunUpgrades();
   traitState = createTraitState();
   resetRun(null);
@@ -3666,9 +3768,9 @@ function getHorizontalOverlap(a, b) {
 function getUserStompDamage(user) {
   const supportInfluence = getUserSupportInfluence(user);
   const effectiveArmor = Math.max(0, Math.floor(((user.armor || 0) + supportInfluence.armorBonus) * 0.5));
-  let damage = Math.max(1, 2 - effectiveArmor);
+  let damage = Math.max(1, 2 + getUpgradeCount("rootCauseImpact") - effectiveArmor);
   if (user.maxDamagePerHit) {
-    damage = Math.min(damage, user.maxDamagePerHit);
+    damage = Math.min(damage, user.maxDamagePerHit + getUpgradeCount("rootCauseImpact"));
   }
   return damage;
 }
@@ -3702,9 +3804,23 @@ function stompUser(user) {
   user.hp -= damage;
   user.hurtTimer = 0.22;
   user.stompCooldown = 0.16;
-  player.vy = user.hp <= 0 ? -620 : -520;
+  const playerBox = makeCollider(player);
+  const playerOffset = getEntityColliderOffset(player);
+  const userBox = makeCollider(user);
+  player.y = userBox.y - playerBox.h - playerOffset.y - 3;
+  player.prevY = player.y;
+  const bounceMultiplier = 1 + getUpgradeCount("priorityBounce") * 0.12;
+  player.vy = -Math.round((user.hp <= 0 ? 620 : 540) * bounceMultiplier);
   player.grounded = false;
-  player.airJumpsRemaining = Math.max(player.airJumpsRemaining || 0, Math.min(player.maxAirJumps || 0, 1));
+  const restoredAirJumps = Math.min(player.maxAirJumps || 0, getUpgradeCount("stompReboot"));
+  if (restoredAirJumps > 0) {
+    player.airJumpsRemaining = Math.max(player.airJumpsRemaining || 0, restoredAirJumps);
+  }
+  const softLandingCount = getUpgradeCount("softLanding");
+  if (softLandingCount > 0) {
+    player.invincibleTimer = Math.max(player.invincibleTimer, 0.18 + softLandingCount * 0.12);
+  }
+  tutorialHintsShown.stompUsed = true;
   spawnImpactParticles(user.x + user.w / 2, user.y + user.h * 0.18, user.tint || "#ffb84d", user.hp <= 0 ? 12 : 8, {
     speedMin: 120,
     speedMax: user.hp <= 0 ? 340 : 240,
@@ -4584,6 +4700,7 @@ function throwKeyboard() {
   }
 
   runStats.keyboardsThrown += 1;
+  tutorialHintsShown.throwUsed = true;
   player.facing = throwPlan.facing;
   const dir = throwPlan.facing;
   const pickupDamageBonus = player.pickupDamageTimer > 0 ? 1 : 0;
@@ -4992,7 +5109,9 @@ function updatePlayer(dt) {
   }
   if (jumpQueued) {
     const jumpForce = player.jumpDebuffTimer > 0 ? currentStats.jump * 0.68 : currentStats.jump;
-    tryCharacterJump(player, jumpForce);
+    if (tryCharacterJump(player, jumpForce)) {
+      tutorialHintsShown.jumpUsed = true;
+    }
     jumpQueued = false;
   }
 
@@ -7612,6 +7731,7 @@ function gameLoop(now) {
 
   if (gameState === "playing") {
     updatePlayer(dt);
+    updateTutorialPrompts(dt);
     updateSlaEscalation(dt);
     updateUsers(dt);
     updateUserProjectiles(dt);
