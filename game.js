@@ -3677,18 +3677,22 @@ function canPlayerStompUser(user) {
   if (!isUserActiveTarget(user) || user.stompCooldown > 0) {
     return false;
   }
-  if (player.vy <= 80) {
+  if (player.vy <= 35) {
     return false;
   }
 
   const playerBox = makeCollider(player);
   const previousPlayerBox = makeCollider({ ...player, y: player.prevY ?? player.y });
   const userBox = makeCollider(user);
-  const horizontalOverlap = getHorizontalOverlap(player, user);
-  const requiredOverlap = Math.min(playerBox.w, userBox.w) * 0.28;
-  const wasAbove = previousPlayerBox.y + previousPlayerBox.h <= userBox.y + 10;
-  const crossedTop = playerBox.y + playerBox.h >= userBox.y;
-  const bodyIsStillAboveHeadZone = playerBox.y < userBox.y + Math.max(12, userBox.h * 0.18);
+  const horizontalGrace = 8;
+  const horizontalOverlap = Math.max(
+    0,
+    Math.min(playerBox.x + playerBox.w + horizontalGrace, userBox.x + userBox.w) - Math.max(playerBox.x - horizontalGrace, userBox.x),
+  );
+  const requiredOverlap = Math.min(playerBox.w, userBox.w) * 0.18;
+  const wasAbove = previousPlayerBox.y + previousPlayerBox.h <= userBox.y + 18;
+  const crossedTop = playerBox.y + playerBox.h >= userBox.y - 4;
+  const bodyIsStillAboveHeadZone = playerBox.y < userBox.y + Math.max(24, userBox.h * 0.34);
 
   return horizontalOverlap >= requiredOverlap && wasAbove && crossedTop && bodyIsStillAboveHeadZone;
 }
