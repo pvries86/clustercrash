@@ -1346,6 +1346,13 @@ function getBuildStatsText(options = {}) {
   if (getUpgradeCount("snapshotRollback") > 0) {
     parts.push(`ROLL ${getUpgradeCount("snapshotRollback")}`);
   }
+  const stompUpgradeCount = getUpgradeCount("stompReboot") + getUpgradeCount("priorityBounce") + getUpgradeCount("rootCauseImpact") + getUpgradeCount("softLanding");
+  if (stompUpgradeCount > 0) {
+    parts.push(`STMP ${2 + getUpgradeCount("rootCauseImpact")}`);
+  }
+  if (getUpgradeCount("priorityBounce") > 0) {
+    parts.push(`SBN ${Math.round(getUpgradeCount("priorityBounce") * 16)}%`);
+  }
 
   return parts.join(" | ");
 }
@@ -1481,28 +1488,28 @@ const UPGRADE_POOL = [
   {
     id: "priorityBounce",
     name: "Priority Bounce",
-    rarity: "uncommon",
+    rarity: "common",
     description: "Stomps bounce you higher, giving safer exits after risky user handling.",
     maxStacks: 3,
-    preview: () => `+${Math.round((getUpgradeCount("priorityBounce") + 1) * 12)}% stomp bounce`,
+    preview: () => `+${Math.round((getUpgradeCount("priorityBounce") + 1) * 16)}% stomp bounce`,
     apply: () => { runUpgrades.priorityBounce += 1; },
   },
   {
     id: "rootCauseImpact",
     name: "Root Cause Impact",
-    rarity: "rare",
+    rarity: "uncommon",
     description: "Stomps deal more damage, making armored and escalated users easier to resolve from above.",
-    maxStacks: 3,
+    maxStacks: 4,
     preview: () => `Stomp damage +${getUpgradeCount("rootCauseImpact") + 1}`,
     apply: () => { runUpgrades.rootCauseImpact += 1; },
   },
   {
     id: "softLanding",
     name: "Soft Landing",
-    rarity: "rare",
+    rarity: "uncommon",
     description: "After a stomp, gain a tiny grace window so crowded platforms do not punish clean hits.",
-    maxStacks: 2,
-    preview: () => `${(0.18 + (getUpgradeCount("softLanding") + 1) * 0.12).toFixed(2)}s post-stomp grace`,
+    maxStacks: 3,
+    preview: () => `${(0.2 + (getUpgradeCount("softLanding") + 1) * 0.12).toFixed(2)}s post-stomp grace`,
     apply: () => { runUpgrades.softLanding += 1; },
   },
   {
@@ -3786,15 +3793,15 @@ function canPlayerStompUser(user) {
   const playerBox = makeCollider(player);
   const previousPlayerBox = makeCollider({ ...player, y: player.prevY ?? player.y });
   const userBox = makeCollider(user);
-  const horizontalGrace = 8;
+  const horizontalGrace = 12;
   const horizontalOverlap = Math.max(
     0,
     Math.min(playerBox.x + playerBox.w + horizontalGrace, userBox.x + userBox.w) - Math.max(playerBox.x - horizontalGrace, userBox.x),
   );
-  const requiredOverlap = Math.min(playerBox.w, userBox.w) * 0.18;
-  const wasAbove = previousPlayerBox.y + previousPlayerBox.h <= userBox.y + 18;
+  const requiredOverlap = Math.min(playerBox.w, userBox.w) * 0.14;
+  const wasAbove = previousPlayerBox.y + previousPlayerBox.h <= userBox.y + 24;
   const crossedTop = playerBox.y + playerBox.h >= userBox.y - 4;
-  const bodyIsStillAboveHeadZone = playerBox.y < userBox.y + Math.max(24, userBox.h * 0.34);
+  const bodyIsStillAboveHeadZone = playerBox.y < userBox.y + Math.max(28, userBox.h * 0.4);
 
   return horizontalOverlap >= requiredOverlap && wasAbove && crossedTop && bodyIsStillAboveHeadZone;
 }
@@ -3809,7 +3816,7 @@ function stompUser(user) {
   const userBox = makeCollider(user);
   player.y = userBox.y - playerBox.h - playerOffset.y - 3;
   player.prevY = player.y;
-  const bounceMultiplier = 1 + getUpgradeCount("priorityBounce") * 0.12;
+  const bounceMultiplier = 1 + getUpgradeCount("priorityBounce") * 0.16;
   player.vy = -Math.round((user.hp <= 0 ? 620 : 540) * bounceMultiplier);
   player.grounded = false;
   const restoredAirJumps = Math.min(player.maxAirJumps || 0, getUpgradeCount("stompReboot"));
@@ -3818,7 +3825,7 @@ function stompUser(user) {
   }
   const softLandingCount = getUpgradeCount("softLanding");
   if (softLandingCount > 0) {
-    player.invincibleTimer = Math.max(player.invincibleTimer, 0.18 + softLandingCount * 0.12);
+    player.invincibleTimer = Math.max(player.invincibleTimer, 0.2 + softLandingCount * 0.12);
   }
   tutorialHintsShown.stompUsed = true;
   spawnImpactParticles(user.x + user.w / 2, user.y + user.h * 0.18, user.tint || "#ffb84d", user.hp <= 0 ? 12 : 8, {
