@@ -4240,29 +4240,21 @@ function getSlaDispatchPlatform(variant) {
   const playerCenterX = player.x + player.w / 2;
   const playerPlatform = getSupportingPlatform(player, 18);
   const candidates = platforms.filter((platform) => {
-    if (isPlatformDisabled(platform) || platform.w < Math.max(250, variant.w + 150)) {
+    if (platform === playerPlatform || isPlatformDisabled(platform) || platform.w < Math.max(250, variant.w + 150)) {
       return false;
     }
     const platformBox = makeCollider(platform);
-    const visibleEnough = platformBox.x + platformBox.w >= cameraX - 40 && platformBox.x <= cameraX + canvas.width + 120;
+    const visibleEnough = platformBox.x + platformBox.w >= cameraX - 40 && platformBox.x <= cameraX + canvas.width + 160;
     const reachableBand = Math.abs(platformBox.y - player.y) < 260;
-    return visibleEnough && reachableBand;
+    const aheadOfPlayer = platformBox.x >= playerCenterX + 50;
+    return visibleEnough && reachableBand && aheadOfPlayer;
   });
 
-  if (playerPlatform && candidates.includes(playerPlatform)) {
-    const platformBox = makeCollider(playerPlatform);
-    const roomLeft = playerCenterX - platformBox.x;
-    const roomRight = platformBox.x + platformBox.w - playerCenterX;
-    if (Math.max(roomLeft, roomRight) > variant.w + 170) {
-      return playerPlatform;
-    }
-  }
-
   return pickWeighted(candidates, (platform) => {
-    const platformCenter = platform.x + platform.w / 2;
-    const distance = Math.abs(platformCenter - playerCenterX);
-    const aheadBonus = platformCenter > playerCenterX ? 1.45 : 1;
-    return aheadBonus / Math.max(0.6, distance / 520);
+    const platformBox = makeCollider(platform);
+    const distanceAhead = Math.max(40, platformBox.x - playerCenterX);
+    const sameHeightBonus = Math.max(0.65, 1 - Math.abs(platformBox.y - player.y) / 420);
+    return sameHeightBonus / Math.max(0.7, distanceAhead / 520);
   });
 }
 
@@ -4290,13 +4282,14 @@ function spawnSlaIncidentDispatch(options = {}) {
   }
 
   const playerCenterX = player.x + player.w / 2;
-  const spawnOnRight = playerCenterX < platform.x + platform.w / 2;
-  const preferredX = spawnOnRight
-    ? platform.x + platform.w - variant.w - 26
-    : platform.x + 26;
+  const platformCenterX = platform.x + platform.w / 2;
+  const spawnInFront = platformCenterX > playerCenterX;
+  const preferredX = spawnInFront
+    ? platform.x + 26
+    : platform.x + platform.w - variant.w - 26;
   const spawnX = Math.max(platform.x + 20, Math.min(preferredX, platform.x + platform.w - variant.w - 20));
   const enemyScaling = getEnemyUpgradeScaling();
-  const user = spawnUserFromVariant(platform, variant, spawnX, enemyScaling, { dir: spawnOnRight ? -1 : 1 });
+  const user = spawnUserFromVariant(platform, variant, spawnX, enemyScaling, { dir: spawnInFront ? -1 : 1 });
   user.slaDispatch = true;
   user.slaDispatchTimer = 1.0;
   user.minX = Math.max(user.minX, platform.x + 12);
